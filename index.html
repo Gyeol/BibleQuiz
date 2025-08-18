@@ -376,9 +376,14 @@
             margin-top: 15px;
         }
         
-        .next-problem-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        .subjective-buttons {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .result-buttons {
+            text-align: center;
+            margin-top: 20px;
         }
         
         .result {
@@ -632,10 +637,9 @@
             box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
         }
         
-        .btn-secondary:hover, .btn-secondary:active {
-            background: #5a6268;
+        .next-problem-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
         }
         @media (max-width: 768px) {
             body {
@@ -1196,18 +1200,27 @@
                 <input type="text" 
                        id="subjectiveAnswer" 
                        class="input-answer" 
-                       placeholder="답을 입력하고 Enter를 누르세요..."
+                       placeholder="답을 입력하세요..."
                        onkeypress="handleSubjectiveKeyPress(event)">
+                <div class="subjective-buttons">
+                    <button class="btn btn-primary" onclick="submitSubjectiveAnswer()">확인</button>
+                </div>
             `;
         }
         
         function handleSubjectiveKeyPress(event) {
             if (event.key === 'Enter') {
-                const input = document.getElementById('subjectiveAnswer');
-                const userAnswer = input.value.trim();
-                if (userAnswer) {
-                    checkAnswerInstantSubjective(userAnswer);
-                }
+                submitSubjectiveAnswer();
+            }
+        }
+        
+        function submitSubjectiveAnswer() {
+            const input = document.getElementById('subjectiveAnswer');
+            const userAnswer = input.value.trim();
+            if (userAnswer) {
+                checkAnswerInstantSubjective(userAnswer);
+            } else {
+                alert('답을 입력해주세요!');
             }
         }
         
@@ -1221,6 +1234,12 @@
             // 카운터 업데이트
             updateAttemptCounter();
             
+            // 확인 버튼 숨기기
+            const buttonDiv = document.querySelector('.subjective-buttons');
+            if (buttonDiv) {
+                buttonDiv.style.display = 'none';
+            }
+            
             // 입력창 색깔 변경 및 비활성화
             const input = document.getElementById('subjectiveAnswer');
             input.classList.add('disabled');
@@ -1230,14 +1249,14 @@
             if (isCorrect) {
                 input.classList.add('correct-answer');
                 resultDiv.innerHTML = `
-                    <div style="text-align: center;">
+                    <div class="result-buttons">
                         <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
                     </div>
                 `;
             } else {
                 input.classList.add('wrong-answer');
                 resultDiv.innerHTML = `
-                    <div style="text-align: center;">
+                    <div class="result-buttons">
                         <button class="btn btn-secondary" onclick="retrySubjective()">다시 시도</button>
                     </div>
                 `;
@@ -1254,6 +1273,13 @@
             const input = document.getElementById('subjectiveAnswer');
             input.value = '';
             input.classList.remove('disabled', 'correct-answer', 'wrong-answer');
+            
+            // 확인 버튼 다시 표시
+            const buttonDiv = document.querySelector('.subjective-buttons');
+            if (buttonDiv) {
+                buttonDiv.style.display = 'block';
+            }
+            
             document.getElementById('result').innerHTML = '';
             input.focus();
         }
@@ -1275,6 +1301,12 @@
                 const input = document.getElementById('subjectiveAnswer');
                 input.value = correctAnswer;
                 input.classList.add('correct-answer', 'disabled');
+                
+                // 확인 버튼 숨기기
+                const buttonDiv = document.querySelector('.subjective-buttons');
+                if (buttonDiv) {
+                    buttonDiv.style.display = 'none';
+                }
             }
             
             // 시도 횟수 기록 (정답 확인도 시도로 카운트)
@@ -1283,7 +1315,7 @@
             
             const resultDiv = document.getElementById('result');
             resultDiv.innerHTML = `
-                <div style="text-align: center;">
+                <div class="result-buttons">
                     <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
                 </div>
             `;
@@ -1323,6 +1355,24 @@
         }
         
         function selectOption(optionNumber) {
+            // 이미 비활성화된 상태라면 아무것도 하지 않음
+            const options = document.querySelectorAll('.option');
+            const isDisabled = options[0].classList.contains('disabled');
+            
+            if (isDisabled) {
+                // 비활성화 상태에서는 다시 활성화하고 초기화
+                retryProblem();
+                // 약간의 지연 후 새로운 선택 처리
+                setTimeout(() => {
+                    selectOptionAfterReset(optionNumber);
+                }, 50);
+            } else {
+                // 일반적인 선택 처리
+                selectOptionAfterReset(optionNumber);
+            }
+        }
+        
+        function selectOptionAfterReset(optionNumber) {
             // 이전 선택 해제
             document.querySelectorAll('.option').forEach(opt => {
                 opt.classList.remove('selected');
@@ -1366,7 +1416,7 @@
                 });
                 
                 resultDiv.innerHTML = `
-                    <div style="text-align: center;">
+                    <div class="result-buttons">
                         <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
                     </div>
                 `;
@@ -1379,7 +1429,7 @@
                 });
                 
                 resultDiv.innerHTML = `
-                    <div style="text-align: center;">
+                    <div class="result-buttons">
                         <button class="btn btn-secondary" onclick="retryProblem()">다시 시도</button>
                     </div>
                 `;
