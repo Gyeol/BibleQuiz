@@ -376,14 +376,14 @@
             margin-top: 15px;
         }
         
-        .subjective-buttons {
-            text-align: center;
-            margin-bottom: 20px;
+        .next-problem-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
         }
         
-        .result-buttons {
+        .subjective-buttons {
             text-align: center;
-            margin-top: 20px;
+            margin: 15px 0;
         }
         
         .result {
@@ -637,9 +637,10 @@
             box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
         }
         
-        .next-problem-btn:hover {
+        .btn-secondary:hover, .btn-secondary:active {
+            background: #5a6268;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
         }
         @media (max-width: 768px) {
             body {
@@ -1203,7 +1204,7 @@
                        placeholder="답을 입력하세요..."
                        onkeypress="handleSubjectiveKeyPress(event)">
                 <div class="subjective-buttons">
-                    <button class="btn btn-primary" onclick="submitSubjectiveAnswer()">확인</button>
+                    <button class="btn btn-primary" onclick="submitSubjectiveAnswer()">답안 제출</button>
                 </div>
             `;
         }
@@ -1234,38 +1235,33 @@
             // 카운터 업데이트
             updateAttemptCounter();
             
-            // 확인 버튼 숨기기
-            const buttonDiv = document.querySelector('.subjective-buttons');
-            if (buttonDiv) {
-                buttonDiv.style.display = 'none';
-            }
-            
             // 입력창 색깔 변경 및 비활성화
             const input = document.getElementById('subjectiveAnswer');
             input.classList.add('disabled');
+            
+            // 답안 제출 버튼 숨기기
+            const submitBtn = document.querySelector('.subjective-buttons');
+            if (submitBtn) {
+                submitBtn.style.display = 'none';
+            }
             
             const resultDiv = document.getElementById('result');
             
             if (isCorrect) {
                 input.classList.add('correct-answer');
                 resultDiv.innerHTML = `
-                    <div class="result-buttons">
+                    <div style="text-align: center; margin-top: 20px;">
                         <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
                     </div>
                 `;
             } else {
                 input.classList.add('wrong-answer');
                 resultDiv.innerHTML = `
-                    <div class="result-buttons">
+                    <div style="text-align: center; margin-top: 20px;">
                         <button class="btn btn-secondary" onclick="retrySubjective()">다시 시도</button>
                     </div>
                 `;
             }
-            
-            // 스크롤을 결과로 이동
-            setTimeout(() => {
-                resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
         }
         
         function retrySubjective() {
@@ -1274,10 +1270,10 @@
             input.value = '';
             input.classList.remove('disabled', 'correct-answer', 'wrong-answer');
             
-            // 확인 버튼 다시 표시
-            const buttonDiv = document.querySelector('.subjective-buttons');
-            if (buttonDiv) {
-                buttonDiv.style.display = 'block';
+            // 답안 제출 버튼 다시 보이기
+            const submitBtn = document.querySelector('.subjective-buttons');
+            if (submitBtn) {
+                submitBtn.style.display = 'block';
             }
             
             document.getElementById('result').innerHTML = '';
@@ -1288,7 +1284,7 @@
             const correctAnswer = currentProblem.answer.toString().trim();
             
             if (currentProblem.type === 'multiple') {
-                // 객관식: 정답 선택지 표시
+                // 객관식: 정답 선택지 표시하고 모든 선택지 비활성화
                 const options = document.querySelectorAll('.option');
                 options.forEach((opt, index) => {
                     opt.classList.add('disabled');
@@ -1302,10 +1298,10 @@
                 input.value = correctAnswer;
                 input.classList.add('correct-answer', 'disabled');
                 
-                // 확인 버튼 숨기기
-                const buttonDiv = document.querySelector('.subjective-buttons');
-                if (buttonDiv) {
-                    buttonDiv.style.display = 'none';
+                // 답안 제출 버튼 숨기기
+                const submitBtn = document.querySelector('.subjective-buttons');
+                if (submitBtn) {
+                    submitBtn.style.display = 'none';
                 }
             }
             
@@ -1315,15 +1311,10 @@
             
             const resultDiv = document.getElementById('result');
             resultDiv.innerHTML = `
-                <div class="result-buttons">
+                <div style="text-align: center; margin-top: 20px;">
                     <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
                 </div>
             `;
-            
-            // 스크롤을 결과로 이동
-            setTimeout(() => {
-                resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
         }
         
         function extractOptions(questionText) {
@@ -1355,27 +1346,14 @@
         }
         
         function selectOption(optionNumber) {
-            // 이미 비활성화된 상태라면 아무것도 하지 않음
-            const options = document.querySelectorAll('.option');
-            const isDisabled = options[0].classList.contains('disabled');
-            
-            if (isDisabled) {
-                // 비활성화 상태에서는 다시 활성화하고 초기화
-                retryProblem();
-                // 약간의 지연 후 새로운 선택 처리
-                setTimeout(() => {
-                    selectOptionAfterReset(optionNumber);
-                }, 50);
-            } else {
-                // 일반적인 선택 처리
-                selectOptionAfterReset(optionNumber);
+            // 이미 정답을 맞춘 상태라면 클릭 무시
+            if (document.querySelector('.option.correct-answer')) {
+                return;
             }
-        }
-        
-        function selectOptionAfterReset(optionNumber) {
-            // 이전 선택 해제
+            
+            // 이전 선택 초기화 (오답 표시 제거)
             document.querySelectorAll('.option').forEach(opt => {
-                opt.classList.remove('selected');
+                opt.classList.remove('selected', 'wrong-answer');
             });
             
             // 새로운 선택
@@ -1399,46 +1377,34 @@
             // 카운터 업데이트
             updateAttemptCounter();
             
-            // 모든 선택지 비활성화
             const options = document.querySelectorAll('.option');
-            options.forEach(opt => {
-                opt.classList.add('disabled');
-            });
-            
             const resultDiv = document.getElementById('result');
             
             if (isCorrect) {
-                // 정답인 경우에만 정답 표시
+                // 정답인 경우: 모든 선택지 비활성화하고 정답 표시
                 options.forEach((opt, index) => {
+                    opt.classList.add('disabled');
                     if (index + 1 === correctAnswer) {
                         opt.classList.add('correct-answer');
                     }
                 });
                 
                 resultDiv.innerHTML = `
-                    <div class="result-buttons">
+                    <div style="text-align: center; margin-top: 20px;">
                         <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
                     </div>
                 `;
             } else {
-                // 오답인 경우 선택한 것만 빨간색
+                // 오답인 경우: 선택한 것만 빨간색 표시, 다른 선택지는 계속 선택 가능
                 options.forEach((opt, index) => {
                     if (index + 1 === parseInt(userAnswer)) {
                         opt.classList.add('wrong-answer');
                     }
                 });
                 
-                resultDiv.innerHTML = `
-                    <div class="result-buttons">
-                        <button class="btn btn-secondary" onclick="retryProblem()">다시 시도</button>
-                    </div>
-                `;
+                // 결과 영역은 비워둠 (다시 시도 버튼 없음)
+                resultDiv.innerHTML = '';
             }
-            
-            // 스크롤을 결과로 이동
-            setTimeout(() => {
-                resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
         }
         
         function retryProblem() {
