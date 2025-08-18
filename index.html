@@ -263,12 +263,42 @@
             transform: translateY(-1px);
         }
         
-        .option.selected {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+        .option.correct-answer {
+            background: linear-gradient(135deg, #28a745, #20c997);
             color: white;
-            border-color: #667eea;
+            border-color: #28a745;
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+        
+        .option.wrong-answer {
+            background: linear-gradient(135deg, #dc3545, #e74c3c);
+            color: white;
+            border-color: #dc3545;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+        
+        .option.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        
+        .input-answer.correct-answer {
+            border-color: #28a745;
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+        }
+        
+        .input-answer.wrong-answer {
+            border-color: #dc3545;
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+        }
+        
+        .input-answer.disabled {
+            pointer-events: none;
+            opacity: 0.7;
         }
         
         .input-answer {
@@ -321,10 +351,33 @@
             color: white;
         }
         
-        .btn-secondary:hover, .btn-secondary:active {
-            background: #5a6268;
+        .btn-hint {
+            background: linear-gradient(45deg, #ffc107, #e0a800);
+            color: #212529;
+        }
+        
+        .btn-hint:hover, .btn-hint:active {
+            background: #e0a800;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+        }
+        
+        .next-problem-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+        
+        .next-problem-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
         }
         
         .result {
@@ -578,12 +631,10 @@
             box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
         }
         
-        .result-section {
-            margin-top: 25px;
-            padding: 20px;
-            border-radius: 12px;
-            border: 2px solid #e9ecef;
-            background: #fff;
+        .btn-secondary:hover, .btn-secondary:active {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
         }
         @media (max-width: 768px) {
             body {
@@ -1112,6 +1163,7 @@
             
             html += `
                     <div class="buttons">
+                        <button class="btn btn-hint" onclick="showAnswer()">💡 정답 확인</button>
                         <button class="btn btn-secondary" onclick="showConfig()" style="background: #17a2b8;">설정</button>
                     </div>
                     <div id="result"></div>
@@ -1171,25 +1223,24 @@
             // 카운터 업데이트
             updateAttemptCounter();
             
+            // 입력창 색깔 변경 및 비활성화
+            const input = document.getElementById('subjectiveAnswer');
+            input.classList.add('disabled');
+            
             const resultDiv = document.getElementById('result');
             
             if (isCorrect) {
+                input.classList.add('correct-answer');
                 resultDiv.innerHTML = `
-                    <div class="result correct">
-                        🎉 정답입니다!
-                        <div style="margin-top: 15px;">
-                            <button class="btn btn-primary" onclick="nextProblem()">다음 문제</button>
-                        </div>
+                    <div style="text-align: center;">
+                        <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
                     </div>
                 `;
             } else {
+                input.classList.add('wrong-answer');
                 resultDiv.innerHTML = `
-                    <div class="result incorrect">
-                        ❌ 틀렸습니다.<br>
-                        정답: <strong>${correctAnswer}</strong>
-                        <div style="margin-top: 15px;">
-                            <button class="btn btn-secondary" onclick="retrySubjective()">다시 시도</button>
-                        </div>
+                    <div style="text-align: center;">
+                        <button class="btn btn-secondary" onclick="retrySubjective()">다시 시도</button>
                     </div>
                 `;
             }
@@ -1202,9 +1253,48 @@
         
         function retrySubjective() {
             // 입력 초기화하고 다시 시도
-            document.getElementById('subjectiveAnswer').value = '';
+            const input = document.getElementById('subjectiveAnswer');
+            input.value = '';
+            input.classList.remove('disabled', 'correct-answer', 'wrong-answer');
             document.getElementById('result').innerHTML = '';
-            document.getElementById('subjectiveAnswer').focus();
+            input.focus();
+        }
+        
+        function showAnswer() {
+            const correctAnswer = currentProblem.answer.toString().trim();
+            
+            if (currentProblem.type === 'multiple') {
+                // 객관식: 정답 선택지 표시
+                const options = document.querySelectorAll('.option');
+                options.forEach((opt, index) => {
+                    opt.classList.add('disabled');
+                    if (index + 1 === parseInt(correctAnswer)) {
+                        opt.classList.add('correct-answer');
+                    }
+                });
+            } else {
+                // 주관식: 정답 입력창에 표시
+                const input = document.getElementById('subjectiveAnswer');
+                input.value = correctAnswer;
+                input.classList.add('correct-answer', 'disabled');
+            }
+            
+            // 시도 횟수 기록 (정답 확인도 시도로 카운트)
+            addAnswerRecord(currentProblem.id);
+            incrementTodayCount();
+            updateAttemptCounter();
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <div style="text-align: center;">
+                    <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
+                </div>
+            `;
+            
+            // 스크롤을 결과로 이동
+            setTimeout(() => {
+                resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
         }
         
         function extractOptions(questionText) {
@@ -1253,8 +1343,8 @@
         }
         
         function checkAnswerInstant(userAnswer) {
-            const correctAnswer = currentProblem.answer.toString().trim();
-            const isCorrect = userAnswer.toString() === correctAnswer;
+            const correctAnswer = parseInt(currentProblem.answer.toString().trim());
+            const isCorrect = parseInt(userAnswer) === correctAnswer;
             
             // 시도 횟수 기록
             addAnswerRecord(currentProblem.id);
@@ -1265,25 +1355,29 @@
             // 카운터 업데이트
             updateAttemptCounter();
             
+            // 모든 선택지 비활성화
+            const options = document.querySelectorAll('.option');
+            options.forEach((opt, index) => {
+                opt.classList.add('disabled');
+                if (index + 1 === correctAnswer) {
+                    opt.classList.add('correct-answer');
+                } else if (index + 1 === parseInt(userAnswer)) {
+                    opt.classList.add('wrong-answer');
+                }
+            });
+            
             const resultDiv = document.getElementById('result');
             
             if (isCorrect) {
                 resultDiv.innerHTML = `
-                    <div class="result correct">
-                        🎉 정답입니다!
-                        <div style="margin-top: 15px;">
-                            <button class="btn btn-primary" onclick="nextProblem()">다음 문제</button>
-                        </div>
+                    <div style="text-align: center;">
+                        <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
                     </div>
                 `;
             } else {
                 resultDiv.innerHTML = `
-                    <div class="result incorrect">
-                        ❌ 틀렸습니다.<br>
-                        정답: <strong>${correctAnswer}번</strong>
-                        <div style="margin-top: 15px;">
-                            <button class="btn btn-secondary" onclick="retryProblem()">다시 시도</button>
-                        </div>
+                    <div style="text-align: center;">
+                        <button class="btn btn-secondary" onclick="retryProblem()">다시 시도</button>
                     </div>
                 `;
             }
@@ -1298,7 +1392,7 @@
             // 선택 초기화하고 다시 시도
             selectedOption = null;
             document.querySelectorAll('.option').forEach(opt => {
-                opt.classList.remove('selected');
+                opt.classList.remove('selected', 'disabled', 'correct-answer', 'wrong-answer');
             });
             document.getElementById('result').innerHTML = '';
         }
