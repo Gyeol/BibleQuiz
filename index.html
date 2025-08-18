@@ -272,11 +272,11 @@
         }
         
         .option.wrong-answer {
-            background: linear-gradient(135deg, #dc3545, #e74c3c);
-            color: white;
+            background: #fff;
+            color: #dc3545;
             border-color: #dc3545;
+            border-width: 3px;
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
         }
         
         .option.disabled {
@@ -292,8 +292,9 @@
         
         .input-answer.wrong-answer {
             border-color: #dc3545;
-            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
-            color: #721c24;
+            border-width: 3px;
+            background: #fff;
+            color: #dc3545;
         }
         
         .input-answer.disabled {
@@ -1217,9 +1218,6 @@
             // 시도 횟수 기록
             addAnswerRecord(currentProblem.id);
             
-            // 오늘 카운트 증가
-            incrementTodayCount();
-            
             // 카운터 업데이트
             updateAttemptCounter();
             
@@ -1281,7 +1279,6 @@
             
             // 시도 횟수 기록 (정답 확인도 시도로 카운트)
             addAnswerRecord(currentProblem.id);
-            incrementTodayCount();
             updateAttemptCounter();
             
             const resultDiv = document.getElementById('result');
@@ -1349,32 +1346,38 @@
             // 시도 횟수 기록
             addAnswerRecord(currentProblem.id);
             
-            // 오늘 카운트 증가
-            incrementTodayCount();
-            
             // 카운터 업데이트
             updateAttemptCounter();
             
             // 모든 선택지 비활성화
             const options = document.querySelectorAll('.option');
-            options.forEach((opt, index) => {
+            options.forEach(opt => {
                 opt.classList.add('disabled');
-                if (index + 1 === correctAnswer) {
-                    opt.classList.add('correct-answer');
-                } else if (index + 1 === parseInt(userAnswer)) {
-                    opt.classList.add('wrong-answer');
-                }
             });
             
             const resultDiv = document.getElementById('result');
             
             if (isCorrect) {
+                // 정답인 경우에만 정답 표시
+                options.forEach((opt, index) => {
+                    if (index + 1 === correctAnswer) {
+                        opt.classList.add('correct-answer');
+                    }
+                });
+                
                 resultDiv.innerHTML = `
                     <div style="text-align: center;">
                         <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
                     </div>
                 `;
             } else {
+                // 오답인 경우 선택한 것만 빨간색
+                options.forEach((opt, index) => {
+                    if (index + 1 === parseInt(userAnswer)) {
+                        opt.classList.add('wrong-answer');
+                    }
+                });
+                
                 resultDiv.innerHTML = `
                     <div style="text-align: center;">
                         <button class="btn btn-secondary" onclick="retryProblem()">다시 시도</button>
@@ -1473,6 +1476,8 @@
         }
         
         function nextProblem() {
+            // 다음 문제로 넘어갈 때 오늘 카운트 증가
+            incrementTodayCount();
             showRandomProblem();
         }
         
