@@ -588,8 +588,8 @@
                 <input type="text" 
                        id="csvPath" 
                        class="config-input" 
-                       placeholder="예: problems.csv 또는 https://example.com/problems.csv"
-                       value="problems.csv">
+                       placeholder="예: problems_01.csv 또는 https://example.com/problems.csv"
+                       value="problems_01.csv">
             </div>
             <button class="load-btn" onclick="loadCSVFromPath()">문제 불러오기</button>
             
@@ -630,7 +630,9 @@
         
         // 로컬 스토리지에서 데이터 로드
         function loadProblemStats() {
-            const saved = localStorage.getItem('problemStats_' + btoa(csvPath));
+            // 한글 안전 인코딩
+            const pathKey = 'problemStats_' + encodeURIComponent(csvPath);
+            const saved = localStorage.getItem(pathKey);
             if (saved) {
                 try {
                     problemStats = JSON.parse(saved);
@@ -644,7 +646,9 @@
         // 로컬 스토리지에 데이터 저장
         function saveProblemStats() {
             try {
-                localStorage.setItem('problemStats_' + btoa(csvPath), JSON.stringify(problemStats));
+                // 한글 안전 인코딩
+                const pathKey = 'problemStats_' + encodeURIComponent(csvPath);
+                localStorage.setItem(pathKey, JSON.stringify(problemStats));
             } catch (e) {
                 console.error('데이터 저장 실패:', e);
             }
@@ -807,15 +811,17 @@
             problems = [];
             loadProblemStats();
             
-            // 첫 번째 행은 헤더로 건너뛰고, 2행부터 시작 (B2, D2)
+            // 첫 번째 행은 헤더로 건너뛰고, 2행부터 시작
             for (let i = 1; i < data.length; i++) {
                 const row = data[i];
-                if (row.length > 3 && row[1] && row[3]) { // B열(index 1), D열(index 3)
-                    const problemId = 'problem_' + i + '_' + btoa(row[1]).slice(0, 10);
+                // B열(index 1)에 문제, D열(index 3)에 정답이 있는지 확인
+                if (row.length > 3 && row[1] && row[3]) { 
+                    // 한글 안전 ID 생성
+                    const problemId = 'problem_' + i + '_' + encodeURIComponent(row[1]).slice(0, 20);
                     const problem = {
                         id: problemId,
                         question: row[1].trim(),
-                        answer: row[3].trim(),
+                        answer: row[3].toString().trim(), // 숫자도 문자열로 변환
                         type: detectProblemType(row[1])
                     };
                     problems.push(problem);
@@ -831,6 +837,7 @@
                 return;
             }
             
+            console.log(`✅ 총 ${problems.length}개의 문제를 불러왔습니다!`);
             document.getElementById('configSection').style.display = 'none';
             showRandomProblem();
         }
