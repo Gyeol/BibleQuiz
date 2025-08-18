@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문제 풀이 사이트</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 15px;
+            -webkit-text-size-adjust: 100%;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1em;
+        }
+        
+        .attempt-counter {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            backdrop-filter: blur(10px);
+            font-weight: 600;
+        }
+        
+        .config-section {
+            padding: 25px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .config-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #495057;
+        }
+        
+        .config-group {
+            margin-bottom: 20px;
+        }
+        
+        .config-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #6c757d;
+        }
+        
+        .config-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1em;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .config-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .load-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .load-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .load-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .content {
+            padding: 25px 20px;
+            min-height: 400px;
+        }
+        
+        .problem-container {
+            margin-bottom: 25px;
+        }
+        
+        .problem-text {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 4px solid #667eea;
+            border-radius: 12px;
+            word-break: keep-all;
+        }
+        
+        .options {
+            margin-bottom: 25px;
+        }
+        
+        .option {
+            display: block;
+            margin: 12px 0;
+            padding: 15px 18px;
+            background: #fff;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            word-break: keep-all;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
+        }
+        
+        .option:hover, .option:active {
+            background: #f8f9fa;
+            border-color: #667eea;
+            transform: translateY(-1px);
+        }
+        
+        .option.selected {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .input-answer {
+            width: 100%;
+            padding: 15px 18px;
+            font-size: 1.1em;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .input-answer:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
+            min-width: 120px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover, .btn-primary:active {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover, .btn-secondary:active {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+        }
+        
+        .result {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: 600;
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .result.correct {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border: 2px solid #b8dabd;
+        }
+        
+        .result.incorrect {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+            border: 2px solid #f1b0b7;
+        }
+        
+        .no-problems, .loading, .error {
+            text-align: center;
+            font-size: 1.2em;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+        
+        .error {
+            color: #dc3545;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 0.95em;
+        }
+        
+        /* 모바일 최적화 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.7em;
+            }
+            
+            .header p {
+                font-size: 0.9em;
+            }
+            
+            .attempt-counter {
+                position: static;
+                margin-top: 15px;
+                font-size: 0.85em;
+                display: inline-block;
+            }
+            
+            .config-section, .content {
+                padding: 20px 15px;
+            }
+            
+            .problem-text {
+                font-size: 1.1em;
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+            
+            .option {
+                padding: 12px 15px;
+                margin: 10px 0;
+                font-size: 0.95em;
+            }
+            
+            .input-answer {
+                padding: 12px 15px;
+                font-size: 1em;
+            }
+            
+            .buttons {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 280px;
+                padding: 14px 20px;
+                font-size: 1em;
+            }
+            
+            .stats {
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+            }
+            
+            .config-input {
+                font-size: 16px; /* iOS 줌 방지 */
+            }
+        }
+        
+        /* 매우 작은 화면 (아이폰 SE 등) */
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+            
+            .header h1 {
+                font-size: 1.5em;
+            }
+            
+            .problem-text {
+                font-size: 1em;
+                padding: 12px;
+            }
+            
+            .result {
+                font-size: 1.1em;
+                padding: 15px;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 터치 디바이스 최적화 */
+        @media (hover: none) and (pointer: coarse) {
+            .option:hover {
+                transform: none;
+                background: #fff;
+                border-color: #e9ecef;
+            }
+            
+            .btn-primary:hover, .btn-secondary:hover {
+                transform: none;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 문제 풀이 사이트</h1>
+            <p>CSV 파일 경로를 설정하고 문제를 풀어보세요!</p>
+            <div class="attempt-counter" id="attemptCounter" style="display: none;">
+                풀이 횟수: <span id="attemptCount">0</span>회
+            </div>
+        </div>
+        
+        <div class="config-section" id="configSection">
+            <div class="config-title">📁 설정</div>
+            <div class="config-group">
+                <label class="config-label" for="csvPath">CSV 파일 경로:</label>
+                <input type="text" 
+                       id="csvPath" 
+                       class="config-input" 
+                       placeholder="예: problems.csv 또는 https://example.com/problems.csv"
+                       value="problems.csv">
+            </div>
+            <button class="load-btn" onclick="loadCSVFromPath()">문제 불러오기</button>
+        </div>
+        
+        <div class="content" id="content">
+            <div class="no-problems">
+                CSV 파일 경로를 입력하고 "문제 불러오기" 버튼을 클릭해주세요.<br><br>
+                <strong>CSV 파일 형식:</strong><br>
+                • B열에 문제, D열에 답<br>
+                • ①②③④ 기호가 있으면 객관식, 없으면 주관식
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let problems = [];
+        let currentProblem = null;
+        let currentProblemIndex = -1;
+        let attemptCounts = {};
+        let selectedOption = null;
+        let csvPath = '';
+        let hasAnswered = false;
+        
+        // 로컬 스토리지에서 데이터 로드
+        function loadAttemptCounts() {
+            const saved = localStorage.getItem('problemAttempts_' + btoa(csvPath));
+            if (saved) {
+                try {
+                    attemptCounts = JSON.parse(saved);
+                } catch (e) {
+                    console.error('저장된 데이터 로드 실패:', e);
+                    attemptCounts = {};
+                }
+            }
+        }
+        
+        // 로컬 스토리지에 데이터 저장
+        function saveAttemptCounts() {
+            try {
+                localStorage.setItem('problemAttempts_' + btoa(csvPath), JSON.stringify(attemptCounts));
+            } catch (e) {
+                console.error('데이터 저장 실패:', e);
+            }
+        }
+        
+        // Enter 키로 파일 로드
+        document.getElementById('csvPath').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                loadCSVFromPath();
+            }
+        });
+        
+        async function loadCSVFromPath() {
+            const pathInput = document.getElementById('csvPath');
+            const path = pathInput.value.trim();
+            
+            if (!path) {
+                alert('CSV 파일 경로를 입력해주세요.');
+                return;
+            }
+            
+            csvPath = path;
+            const content = document.getElementById('content');
+            const loadBtn = document.querySelector('.load-btn');
+            
+            content.innerHTML = '<div class="loading">📂 파일을 읽는 중...</div>';
+            loadBtn.disabled = true;
+            loadBtn.textContent = '로딩 중...';
+            
+            try {
+                let csvData;
+                
+                // URL인지 로컬 파일인지 판단
+                if (path.startsWith('http://') || path.startsWith('https://')) {
+                    const response = await fetch(path);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    csvData = await response.text();
+                } else {
+                    // 로컬 파일의 경우 fetch 시도
+                    const response = await fetch(path);
+                    if (!response.ok) {
+                        throw new Error(`파일을 찾을 수 없습니다: ${path}`);
+                    }
+                    csvData = await response.text();
+                }
+                
+                Papa.parse(csvData, {
+                    header: false,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        parseProblems(results.data);
+                        loadBtn.disabled = false;
+                        loadBtn.textContent = '문제 불러오기';
+                    },
+                    error: function(error) {
+                        showError('CSV 파싱 오류: ' + error.message);
+                        loadBtn.disabled = false;
+                        loadBtn.textContent = '문제 불러오기';
+                    }
+                });
+                
+            } catch (error) {
+                showError('파일 로드 실패: ' + error.message);
+                loadBtn.disabled = false;
+                loadBtn.textContent = '문제 불러오기';
+            }
+        }
+        
+        function showError(message) {
+            document.getElementById('content').innerHTML = `
+                <div class="error">
+                    ❌ ${message}<br><br>
+                    <strong>해결 방법:</strong><br>
+                    • 파일 경로가 정확한지 확인<br>
+                    • 파일이 같은 폴더에 있는지 확인<br>
+                    • HTTP(S) URL의 경우 CORS 정책 확인
+                </div>
+            `;
+        }
+        
+        function parseProblems(data) {
+            problems = [];
+            loadAttemptCounts();
+            
+            // 첫 번째 행은 헤더로 건너뛰고, 2행부터 시작 (B2, D2)
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (row.length > 3 && row[1] && row[3]) { // B열(index 1), D열(index 3)
+                    const problemId = 'problem_' + i + '_' + btoa(row[1]).slice(0, 10);
+                    const problem = {
+                        id: problemId,
+                        question: row[1].trim(),
+                        answer: row[3].trim(),
+                        type: detectProblemType(row[1])
+                    };
+                    problems.push(problem);
+                    
+                    // 새로운 문제라면 시도 횟수 초기화
+                    if (attemptCounts[problemId] === undefined) {
+                        attemptCounts[problemId] = 0;
+                    }
+                }
+            }
+            
+            if (problems.length === 0) {
+                document.getElementById('content').innerHTML = 
+                    '<div class="error">올바른 형식의 문제를 찾을 수 없습니다.<br>B열에 문제, D열에 답이 있는지 확인해주세요.</div>';
+                return;
+            }
+            
+            document.getElementById('configSection').style.display = 'none';
+            showRandomProblem();
+        }
+        
+        function detectProblemType(questionText) {
+            // ①②③④ 기호가 있으면 객관식
+            const hasChoiceSymbols = /[①②③④⑤]/g.test(questionText);
+            return hasChoiceSymbols ? 'multiple' : 'subjective';
+        }
+        
+        function showRandomProblem() {
+            if (problems.length === 0) return;
+            
+            currentProblemIndex = Math.floor(Math.random() * problems.length);
+            currentProblem = problems[currentProblemIndex];
+            hasAnswered = false;
+            
+            updateAttemptCounter();
+            renderProblem();
+        }
+        
+        function updateAttemptCounter() {
+            const counter = document.getElementById('attemptCounter');
+            const countSpan = document.getElementById('attemptCount');
+            countSpan.textContent = attemptCounts[currentProblem.id];
+            counter.style.display = 'block';
+        }
+        
+        function renderProblem() {
+            const content = document.getElementById('content');
+            selectedOption = null;
+            
+            let html = `
+                <div class="problem-container">
+                    <div class="stats">
+                        <div>📊 전체 문제: ${problems.length}개</div>
+                        <div>🎯 현재 문제 풀이 횟수: ${attemptCounts[currentProblem.id]}회</div>
+                    </div>
+                    <div class="problem-text">${currentProblem.question}</div>
+            `;
+            
+            if (currentProblem.type === 'multiple') {
+                html += renderMultipleChoice();
+            } else {
+                html += renderSubjective();
+            }
+            
+            html += `
+                    <div class="buttons">
+                        <button class="btn btn-primary" onclick="checkAnswer()">정답 확인</button>
+                        <button class="btn btn-secondary" onclick="nextProblem()">다음 문제</button>
+                        <button class="btn btn-secondary" onclick="showConfig()" style="background: #17a2b8;">설정</button>
+                    </div>
+                    <div id="result"></div>
+                </div>
+            `;
+            
+            content.innerHTML = html;
+        }
+        
+        function renderMultipleChoice() {
+            const options = extractOptions(currentProblem.question);
+            let html = '<div class="options">';
+            
+            options.forEach((option, index) => {
+                const symbol = ['①', '②', '③', '④', '⑤'][index];
+                html += `
+                    <div class="option" onclick="selectOption(${index + 1})">
+                        ${symbol} ${option}
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            return html;
+        }
+        
+        function renderSubjective() {
+            return `
+                <input type="text" 
+                       id="subjectiveAnswer" 
+                       class="input-answer" 
+                       placeholder="답을 입력하세요..."
+                       onkeypress="handleKeyPress(event)">
+            `;
+        }
+        
+        function extractOptions(questionText) {
+            const symbols = ['①', '②', '③', '④', '⑤'];
+            const options = [];
+            
+            for (let i = 0; i < symbols.length; i++) {
+                const currentSymbol = symbols[i];
+                const nextSymbol = symbols[i + 1];
+                
+                const startIndex = questionText.indexOf(currentSymbol);
+                if (startIndex === -1) break;
+                
+                let endIndex;
+                if (nextSymbol) {
+                    endIndex = questionText.indexOf(nextSymbol);
+                    if (endIndex === -1) endIndex = questionText.length;
+                } else {
+                    endIndex = questionText.length;
+                }
+                
+                const optionText = questionText.substring(startIndex + 1, endIndex).trim();
+                if (optionText) {
+                    options.push(optionText);
+                }
+            }
+            
+            return options;
+        }
+        
+        function selectOption(optionNumber) {
+            // 이전 선택 해제
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // 새로운 선택
+            const options = document.querySelectorAll('.option');
+            if (options[optionNumber - 1]) {
+                options[optionNumber - 1].classList.add('selected');
+                selectedOption = optionNumber;
+            }
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                checkAnswer();
+            }
+        }
+        
+        function checkAnswer() {
+            let userAnswer = '';
+            
+            if (currentProblem.type === 'multiple') {
+                if (selectedOption === null) {
+                    alert('답을 선택해주세요!');
+                    return;
+                }
+                userAnswer = selectedOption.toString();
+            } else {
+                const input = document.getElementById('subjectiveAnswer');
+                userAnswer = input.value.trim();
+                if (!userAnswer) {
+                    alert('답을 입력해주세요!');
+                    return;
+                }
+            }
+            
+            const correctAnswer = currentProblem.answer.toString().trim();
+            const isCorrect = userAnswer.toLowerCase() === correctAnswer.toLowerCase();
+            
+            showResult(isCorrect, correctAnswer);
+            hasAnswered = true;
+        }
+        
+        function showResult(isCorrect, correctAnswer) {
+            const resultDiv = document.getElementById('result');
+            
+            if (isCorrect) {
+                resultDiv.innerHTML = '<div class="result correct">🎉 정답입니다! 잘했어요!</div>';
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="result incorrect">
+                        ❌ 틀렸습니다.<br>
+                        정답: <strong>${correctAnswer}</strong>
+                    </div>
+                `;
+            }
+            
+            // 스크롤을 결과로 이동
+            setTimeout(() => {
+                resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+        
+        function nextProblem() {
+            // 답을 확인했을 때만 카운트 증가
+            if (hasAnswered && currentProblem) {
+                attemptCounts[currentProblem.id]++;
+                saveAttemptCounts();
+            }
+            showRandomProblem();
+        }
+        
+        function showConfig() {
+            document.getElementById('configSection').style.display = 'block';
+            document.getElementById('content').innerHTML = 
+                '<div class="no-problems">설정을 변경하고 새로운 문제 파일을 불러오세요.</div>';
+            document.getElementById('attemptCounter').style.display = 'none';
+        }
+        
+        // 키보드 단축키
+        document.addEventListener('keydown', function(event) {
+            // Ctrl + Enter: 다음 문제
+            if (event.key === 'Enter' && event.ctrlKey) {
+                event.preventDefault();
+                nextProblem();
+            }
+            // Enter: 정답 확인 (input에 포커스가 없을 때)
+            else if (event.key === 'Enter' && !document.activeElement.matches('input, textarea')) {
+                event.preventDefault();
+                if (document.querySelector('.btn-primary')) {
+                    checkAnswer();
+                }
+            }
+        });
+        
+        // 페이지 로드 시 저장된 경로가 있으면 자동 로드
+        window.addEventListener('load', function() {
+            const savedPath = localStorage.getItem('lastCSVPath');
+            if (savedPath) {
+                document.getElementById('csvPath').value = savedPath;
+            }
+        });
+        
+        // 경로 변경 시 저장
+        document.getElementById('csvPath').addEventListener('change', function() {
+            localStorage.setItem('lastCSVPath', this.value);
+        });
+    </script>
+</body>
+</html>
