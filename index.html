@@ -276,7 +276,85 @@
             font-size: 0.95em;
         }
         
-        /* 모바일 최적화 */
+        .backup-section {
+            margin-top: 25px;
+            padding: 20px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            border: 1px solid #bbdefb;
+        }
+        
+        .backup-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .backup-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .backup-btn {
+            background: #2196f3;
+            color: white;
+        }
+        
+        .backup-btn:hover {
+            background: #1976d2;
+            transform: translateY(-1px);
+        }
+        
+        .restore-btn {
+            background: #4caf50 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .restore-btn:hover {
+            background: #388e3c !important;
+        }
+        
+        .clear-btn {
+            background: #f44336 !important;
+        }
+        
+        .clear-btn:hover {
+            background: #d32f2f !important;
+        }
+        
+        .backup-info {
+            font-size: 0.85em;
+            color: #1565c0;
+            text-align: center;
+            line-height: 1.4;
+        }
+        
+        /* 모바일 백업 섹션 최적화 */
+        @media (max-width: 768px) {
+            .backup-buttons {
+                flex-direction: column;
+            }
+            
+            .backup-btn {
+                min-width: auto;
+                width: 100%;
+            }
+            
+            .backup-info {
+                font-size: 0.8em;
+            }
+        }
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -412,6 +490,21 @@
                        value="problems.csv">
             </div>
             <button class="load-btn" onclick="loadCSVFromPath()">문제 불러오기</button>
+            
+            <div class="backup-section">
+                <div class="config-title">💾 진행률 백업/복원</div>
+                <div class="backup-buttons">
+                    <button class="backup-btn" onclick="exportProgress()">📥 진행률 다운로드</button>
+                    <label class="backup-btn restore-btn">
+                        📤 진행률 복원
+                        <input type="file" id="restoreFile" accept=".json" style="display: none;" onchange="importProgress(event)">
+                    </label>
+                    <button class="backup-btn clear-btn" onclick="clearAllProgress()">🗑️ 모든 기록 삭제</button>
+                </div>
+                <div class="backup-info">
+                    다른 기기에서 같은 진행률을 사용하려면 백업 파일을 다운로드하고 복원하세요.
+                </div>
+            </div>
         </div>
         
         <div class="content" id="content">
@@ -774,7 +867,169 @@
             }
         });
         
-        // 페이지 로드 시 저장된 경로가 있으면 자동 로드
+        // 진행률 백업 기능
+        function exportProgress() {
+            // 모든 저장된 진행률 데이터 수집
+            const allData = {};
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('problemAttempts_') || key === 'lastCSVPath') {
+                    allData[key] = localStorage.getItem(key);
+                }
+            }
+            
+            if (Object.keys(allData).length === 0) {
+                alert('저장된 진행률 데이터가 없습니다.');
+                return;
+            }
+            
+            // 백업 파일 생성
+            const backupData = {
+                version: '1.0',
+                timestamp: new Date().toISOString(),
+                data: allData
+            };
+            
+            const blob = new Blob([JSON.stringify(backupData, null, 2)], {
+                type: 'application/json'
+            });
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `problem_progress_${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('진행률이 다운로드되었습니다! 📥');
+        }
+        
+        function importProgress(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    
+                    if (!backupData.data) {
+                        throw new Error('올바르지 않은 백업 파일 형식입니다.');
+                    }
+                    
+                    // 현재 데이터와 백업 데이터 병합 여부 확인
+                    const hasCurrentData = Object.keys(localStorage).some(key => 
+                        key.startsWith('problemAttempts_')
+                    );
+                    
+                    let shouldProceed = true;
+                    if (hasCurrentData) {
+                        shouldProceed = confirm(
+                            '현재 저장된 진행률이 있습니다.\n' +
+                            '복원하면 현재 데이터와 병합됩니다. 계속하시겠습니까?\n\n' +
+                            '※ 같은 문제의 경우 더 높은 풀이 횟수로 업데이트됩니다.'
+                        );
+                    }
+                    
+                    if (!shouldProceed) return;
+                    
+                    // 데이터 복원 (병합 방식)
+                    let restoredCount = 0;
+                    for (const [key, value] of Object.entries(backupData.data)) {
+                        if (key.startsWith('problemAttempts_')) {
+                            // 기존 데이터와 병합 (최대값 사용)
+                            const existingData = localStorage.getItem(key);
+                            if (existingData) {
+                                try {
+                                    const existing = JSON.parse(existingData);
+                                    const backup = JSON.parse(value);
+                                    const merged = {};
+                                    
+                                    // 모든 문제 ID에 대해 최대값 선택
+                                    const allIds = new Set([...Object.keys(existing), ...Object.keys(backup)]);
+                                    allIds.forEach(id => {
+                                        merged[id] = Math.max(existing[id] || 0, backup[id] || 0);
+                                    });
+                                    
+                                    localStorage.setItem(key, JSON.stringify(merged));
+                                } catch (e) {
+                                    localStorage.setItem(key, value);
+                                }
+                            } else {
+                                localStorage.setItem(key, value);
+                            }
+                            restoredCount++;
+                        } else {
+                            localStorage.setItem(key, value);
+                        }
+                    }
+                    
+                    // 현재 표시된 문제의 카운터 업데이트
+                    if (currentProblem) {
+                        updateAttemptCounter();
+                        // 통계 정보도 업데이트
+                        const statsDiv = document.querySelector('.stats');
+                        if (statsDiv) {
+                            statsDiv.innerHTML = `
+                                <div>📊 전체 문제: ${problems.length}개</div>
+                                <div>🎯 현재 문제 풀이 횟수: ${attemptCounts[currentProblem.id]}회</div>
+                            `;
+                        }
+                    }
+                    
+                    alert(`진행률이 성공적으로 복원되었습니다! 📤\n복원된 파일: ${restoredCount}개`);
+                    
+                } catch (error) {
+                    alert('백업 파일을 읽을 수 없습니다.\n오류: ' + error.message);
+                }
+                
+                // 파일 입력 초기화
+                event.target.value = '';
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        function clearAllProgress() {
+            const hasData = Object.keys(localStorage).some(key => 
+                key.startsWith('problemAttempts_')
+            );
+            
+            if (!hasData) {
+                alert('삭제할 진행률 데이터가 없습니다.');
+                return;
+            }
+            
+            const confirmed = confirm(
+                '⚠️ 정말로 모든 풀이 기록을 삭제하시겠습니까?\n\n' +
+                '이 작업은 되돌릴 수 없습니다.\n' +
+                '삭제하기 전에 백업을 권장합니다.'
+            );
+            
+            if (confirmed) {
+                // 진행률 관련 데이터만 삭제
+                const keysToDelete = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('problemAttempts_')) {
+                        keysToDelete.push(key);
+                    }
+                }
+                
+                keysToDelete.forEach(key => localStorage.removeItem(key));
+                
+                // 현재 데이터 초기화
+                attemptCounts = {};
+                if (currentProblem) {
+                    updateAttemptCounter();
+                }
+                
+                alert('모든 풀이 기록이 삭제되었습니다. 🗑️');
+            }
+        }
         window.addEventListener('load', function() {
             const savedPath = localStorage.getItem('lastCSVPath');
             if (savedPath) {
