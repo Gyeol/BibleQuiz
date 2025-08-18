@@ -495,9 +495,9 @@
             background: linear-gradient(135deg, #d1ecf1, #bee5eb);
         }
         
-        .stat-card.accuracy {
-            border-color: #ffc107;
-            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+        .stat-card.attempts {
+            border-color: #6f42c1;
+            background: linear-gradient(135deg, #e2d9f3, #d1c4e9);
         }
         
         .stat-number {
@@ -897,44 +897,19 @@
             }
         }
         
-        // 문제 통계 초기화
+        // 문제 통계 초기화 (간소화)
         function initProblemStat(problemId) {
             if (!problemStats[problemId]) {
                 problemStats[problemId] = {
-                    totalAttempts: 0,
-                    correct: 0,
-                    incorrect: 0,
-                    history: []
+                    attempts: 0  // 시도 횟수만 기록
                 };
             }
         }
         
-        // 답안 기록 추가
-        function addAnswerRecord(problemId, isCorrect, userAnswer, correctAnswer) {
+        // 답안 기록 추가 (간소화)
+        function addAnswerRecord(problemId) {
             initProblemStat(problemId);
-            
-            const stat = problemStats[problemId];
-            stat.totalAttempts++;
-            
-            if (isCorrect) {
-                stat.correct++;
-            } else {
-                stat.incorrect++;
-            }
-            
-            // 히스토리 추가 (최근 20개만 보관)
-            stat.history.unshift({
-                timestamp: new Date().toLocaleString(),
-                isCorrect: isCorrect,
-                userAnswer: userAnswer,
-                correctAnswer: correctAnswer
-            });
-            
-            // 최근 20개만 유지
-            if (stat.history.length > 20) {
-                stat.history = stat.history.slice(0, 20);
-            }
-            
+            problemStats[problemId].attempts++;
             saveProblemStats();
         }
         
@@ -1106,7 +1081,7 @@
             const counter = document.getElementById('attemptCounter');
             const countSpan = document.getElementById('attemptCount');
             const stat = problemStats[currentProblem.id];
-            countSpan.textContent = stat ? stat.totalAttempts : 0;
+            countSpan.textContent = stat ? stat.attempts : 0;
             counter.style.display = 'block';
         }
         
@@ -1118,13 +1093,13 @@
             document.getElementById('resetTodayBtn').style.display = 'none';
             
             const stat = problemStats[currentProblem.id];
-            const totalAttempts = stat ? stat.totalAttempts : 0;
+            const attempts = stat ? stat.attempts : 0;
             
             let html = `
                 <div class="problem-container">
                     <div class="stats">
                         <div>📊 전체 문제: ${problems.length}개</div>
-                        <div>🎯 현재 문제 풀이 횟수: ${totalAttempts}회</div>
+                        <div>🎯 이 문제 시도 횟수: ${attempts}회</div>
                     </div>
                     <div class="problem-text">${currentProblem.question}</div>
             `;
@@ -1137,8 +1112,6 @@
             
             html += `
                     <div class="buttons">
-                        <button class="btn btn-primary" onclick="checkAnswer()">정답 확인</button>
-                        <button class="btn btn-secondary" onclick="nextProblem()">다음 문제</button>
                         <button class="btn btn-secondary" onclick="showConfig()" style="background: #17a2b8;">설정</button>
                     </div>
                     <div id="result"></div>
@@ -1170,9 +1143,68 @@
                 <input type="text" 
                        id="subjectiveAnswer" 
                        class="input-answer" 
-                       placeholder="답을 입력하세요..."
-                       onkeypress="handleKeyPress(event)">
+                       placeholder="답을 입력하고 Enter를 누르세요..."
+                       onkeypress="handleSubjectiveKeyPress(event)">
             `;
+        }
+        
+        function handleSubjectiveKeyPress(event) {
+            if (event.key === 'Enter') {
+                const input = document.getElementById('subjectiveAnswer');
+                const userAnswer = input.value.trim();
+                if (userAnswer) {
+                    checkAnswerInstantSubjective(userAnswer);
+                }
+            }
+        }
+        
+        function checkAnswerInstantSubjective(userAnswer) {
+            const correctAnswer = currentProblem.answer.toString().trim();
+            const isCorrect = userAnswer.toLowerCase() === correctAnswer.toLowerCase();
+            
+            // 시도 횟수 기록
+            addAnswerRecord(currentProblem.id);
+            
+            // 오늘 카운트 증가
+            incrementTodayCount();
+            
+            // 카운터 업데이트
+            updateAttemptCounter();
+            
+            const resultDiv = document.getElementById('result');
+            
+            if (isCorrect) {
+                resultDiv.innerHTML = `
+                    <div class="result correct">
+                        🎉 정답입니다!
+                        <div style="margin-top: 15px;">
+                            <button class="btn btn-primary" onclick="nextProblem()">다음 문제</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="result incorrect">
+                        ❌ 틀렸습니다.<br>
+                        정답: <strong>${correctAnswer}</strong>
+                        <div style="margin-top: 15px;">
+                            <button class="btn btn-secondary" onclick="retrySubjective()">다시 시도</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // 스크롤을 결과로 이동
+            setTimeout(() => {
+                resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+        
+        function retrySubjective() {
+            // 입력 초기화하고 다시 시도
+            document.getElementById('subjectiveAnswer').value = '';
+            document.getElementById('result').innerHTML = '';
+            document.getElementById('subjectiveAnswer').focus();
         }
         
         function extractOptions(questionText) {
@@ -1214,7 +1246,61 @@
             if (options[optionNumber - 1]) {
                 options[optionNumber - 1].classList.add('selected');
                 selectedOption = optionNumber;
+                
+                // 즉시 정답 체크
+                checkAnswerInstant(optionNumber);
             }
+        }
+        
+        function checkAnswerInstant(userAnswer) {
+            const correctAnswer = currentProblem.answer.toString().trim();
+            const isCorrect = userAnswer.toString() === correctAnswer;
+            
+            // 시도 횟수 기록
+            addAnswerRecord(currentProblem.id);
+            
+            // 오늘 카운트 증가
+            incrementTodayCount();
+            
+            // 카운터 업데이트
+            updateAttemptCounter();
+            
+            const resultDiv = document.getElementById('result');
+            
+            if (isCorrect) {
+                resultDiv.innerHTML = `
+                    <div class="result correct">
+                        🎉 정답입니다!
+                        <div style="margin-top: 15px;">
+                            <button class="btn btn-primary" onclick="nextProblem()">다음 문제</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="result incorrect">
+                        ❌ 틀렸습니다.<br>
+                        정답: <strong>${correctAnswer}번</strong>
+                        <div style="margin-top: 15px;">
+                            <button class="btn btn-secondary" onclick="retryProblem()">다시 시도</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // 스크롤을 결과로 이동
+            setTimeout(() => {
+                resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+        
+        function retryProblem() {
+            // 선택 초기화하고 다시 시도
+            selectedOption = null;
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.getElementById('result').innerHTML = '';
         }
         
         function handleKeyPress(event) {
@@ -1321,24 +1407,12 @@
                             <div class="stat-number">${totalStats.progressPercentage}%</div>
                             <div class="stat-label">진행률</div>
                         </div>
-                        <div class="stat-card accuracy">
-                            <div class="stat-number">${totalStats.accuracyPercentage}%</div>
-                            <div class="stat-label">전체 정답률</div>
+                        <div class="stat-card attempts">
+                            <div class="stat-number">${totalStats.totalAttempts}</div>
+                            <div class="stat-label">총 시도 횟수</div>
                         </div>
                     </div>
                     <div class="stats-details">
-                        <div class="detail-item">
-                            <span class="detail-label">총 시도 횟수:</span>
-                            <span class="detail-value">${totalStats.totalAttempts}회</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">정답 횟수:</span>
-                            <span class="detail-value correct-color">${totalStats.totalCorrect}회</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">오답 횟수:</span>
-                            <span class="detail-value incorrect-color">${totalStats.totalIncorrect}회</span>
-                        </div>
                         <div class="detail-item">
                             <span class="detail-label">오늘 푼 문제:</span>
                             <span class="detail-value today-color">${getTodayCount()}문제</span>
