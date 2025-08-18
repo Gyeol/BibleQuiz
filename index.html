@@ -38,6 +38,40 @@
             position: relative;
         }
         
+        .today-counter {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            backdrop-filter: blur(10px);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .reset-today-btn {
+            background: rgba(255,255,255,0.3);
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 0.8em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .reset-today-btn:hover {
+            background: rgba(255,255,255,0.5);
+            transform: rotate(180deg);
+        }
+        
         .header h1 {
             font-size: 2em;
             margin-bottom: 8px;
@@ -414,6 +448,136 @@
             font-style: italic;
         }
         
+        .stats-overview {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .stats-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 25px;
+            color: #495057;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 2px solid #e9ecef;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .stat-card.solved {
+            border-color: #28a745;
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        }
+        
+        .stat-card.progress {
+            border-color: #007bff;
+            background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+        }
+        
+        .stat-card.accuracy {
+            border-color: #ffc107;
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: 700;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .stats-details {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+        
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            font-weight: 500;
+            color: #6c757d;
+        }
+        
+        .detail-value {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .correct-color {
+            color: #28a745 !important;
+        }
+        
+        .incorrect-color {
+            color: #dc3545 !important;
+        }
+        
+        .today-color {
+            color: #007bff !important;
+        }
+        
+        .today-reset-section {
+            margin-top: 15px;
+            text-align: center;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .today-reset-btn {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .today-reset-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        }
+        
         .result-section {
             margin-top: 25px;
             padding: 20px;
@@ -421,8 +585,6 @@
             border: 2px solid #e9ecef;
             background: #fff;
         }
-        
-        /* 모바일 최적화 */
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -449,6 +611,13 @@
                 margin-top: 15px;
                 font-size: 0.85em;
                 display: inline-block;
+            }
+            
+            .today-counter {
+                position: static;
+                margin-bottom: 15px;
+                font-size: 0.8em;
+                justify-content: center;
             }
             
             .config-section, .content {
@@ -525,8 +694,33 @@
                 width: 100%;
             }
             
-            .backup-info {
+            /* 모바일 통계 최적화 */
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            
+            .stat-card {
+                padding: 15px 10px;
+            }
+            
+            .stat-number {
+                font-size: 1.6em;
+            }
+            
+            .stat-label {
                 font-size: 0.8em;
+            }
+            
+            .stats-details {
+                padding: 15px;
+            }
+            
+            .detail-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+                padding: 10px 0;
             }
         }
         
@@ -574,6 +768,10 @@
 <body>
     <div class="container">
         <div class="header">
+            <div class="today-counter">
+                오늘: <span id="todayCount">0</span>문제
+                <button class="reset-today-btn" id="resetTodayBtn" onclick="resetTodayCount()" title="오늘 카운트 초기화" style="display: none;">🔄</button>
+            </div>
             <h1>📚 문제 풀이 사이트</h1>
             <p>CSV 파일 경로를 설정하고 문제를 풀어보세요!</p>
             <div class="attempt-counter" id="attemptCounter" style="display: none;">
@@ -627,6 +825,51 @@
         let selectedOption = null;
         let csvPath = '';
         let hasAnswered = false;
+        
+        // 오늘 날짜 가져오기 (YYYY-MM-DD 형식)
+        function getTodayDateString() {
+            const today = new Date();
+            return today.getFullYear() + '-' + 
+                   String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(today.getDate()).padStart(2, '0');
+        }
+        
+        // 오늘 카운트 가져오기
+        function getTodayCount() {
+            const todayKey = 'todayCount_' + getTodayDateString();
+            return parseInt(localStorage.getItem(todayKey) || '0');
+        }
+        
+        // 오늘 카운트 증가
+        function incrementTodayCount() {
+            const todayKey = 'todayCount_' + getTodayDateString();
+            const currentCount = getTodayCount();
+            localStorage.setItem(todayKey, (currentCount + 1).toString());
+            updateTodayDisplay();
+        }
+        
+        // 오늘 카운트 표시 업데이트
+        function updateTodayDisplay() {
+            const todayCountSpan = document.getElementById('todayCount');
+            if (todayCountSpan) {
+                todayCountSpan.textContent = getTodayCount();
+            }
+        }
+        
+        // 오늘 카운트 초기화
+        function resetTodayCount() {
+            const confirmed = confirm(
+                '⚠️ 정말로 오늘의 풀이 카운트를 초기화하시겠습니까?\n\n' +
+                '현재 오늘 푼 문제: ' + getTodayCount() + '문제\n' +
+                '이 작업은 되돌릴 수 없습니다.'
+            );
+            if (confirmed) {
+                const todayKey = 'todayCount_' + getTodayDateString();
+                localStorage.setItem(todayKey, '0');
+                updateTodayDisplay();
+                alert('✅ 오늘의 카운트가 초기화되었습니다!');
+            }
+        }
         
         // 로컬 스토리지에서 데이터 로드
         function loadProblemStats() {
@@ -871,6 +1114,9 @@
             const content = document.getElementById('content');
             selectedOption = null;
             
+            // 문제 풀이 중에는 리셋 버튼 숨기기
+            document.getElementById('resetTodayBtn').style.display = 'none';
+            
             const stat = problemStats[currentProblem.id];
             const totalAttempts = stat ? stat.totalAttempts : 0;
             
@@ -1015,6 +1261,9 @@
             
             addAnswerRecord(currentProblem.id, isCorrect, userAnswer, correctAnswer);
             
+            // 오늘 카운트 증가 (정답/오답 상관없이 문제를 풀었으면 증가)
+            incrementTodayCount();
+            
             let resultHTML = '';
             if (isCorrect) {
                 resultHTML = '<div class="result correct">🎉 정답입니다! 잘했어요!</div>';
@@ -1049,9 +1298,103 @@
         
         function showConfig() {
             document.getElementById('configSection').style.display = 'block';
-            document.getElementById('content').innerHTML = 
-                '<div class="no-problems">설정을 변경하고 새로운 문제 파일을 불러오세요.</div>';
             document.getElementById('attemptCounter').style.display = 'none';
+            
+            // 설정 화면에서는 리셋 버튼 표시
+            document.getElementById('resetTodayBtn').style.display = 'flex';
+            
+            // 전체 통계 계산 및 표시
+            const totalStats = calculateTotalStats();
+            document.getElementById('content').innerHTML = `
+                <div class="stats-overview">
+                    <div class="stats-title">📊 전체 통계</div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number">${totalStats.totalProblems}</div>
+                            <div class="stat-label">전체 문제</div>
+                        </div>
+                        <div class="stat-card solved">
+                            <div class="stat-number">${totalStats.solvedProblems}</div>
+                            <div class="stat-label">풀어본 문제</div>
+                        </div>
+                        <div class="stat-card progress">
+                            <div class="stat-number">${totalStats.progressPercentage}%</div>
+                            <div class="stat-label">진행률</div>
+                        </div>
+                        <div class="stat-card accuracy">
+                            <div class="stat-number">${totalStats.accuracyPercentage}%</div>
+                            <div class="stat-label">전체 정답률</div>
+                        </div>
+                    </div>
+                    <div class="stats-details">
+                        <div class="detail-item">
+                            <span class="detail-label">총 시도 횟수:</span>
+                            <span class="detail-value">${totalStats.totalAttempts}회</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">정답 횟수:</span>
+                            <span class="detail-value correct-color">${totalStats.totalCorrect}회</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">오답 횟수:</span>
+                            <span class="detail-value incorrect-color">${totalStats.totalIncorrect}회</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">오늘 푼 문제:</span>
+                            <span class="detail-value today-color">${getTodayCount()}문제</span>
+                        </div>
+                        <div class="today-reset-section">
+                            <button class="today-reset-btn" onclick="resetTodayCount()">🔄 오늘 카운트 초기화</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="no-problems">
+                    설정을 변경하고 새로운 문제 파일을 불러오세요.
+                </div>
+            `;
+        }
+        
+        // 전체 통계 계산
+        function calculateTotalStats() {
+            if (!problems || problems.length === 0) {
+                return {
+                    totalProblems: 0,
+                    solvedProblems: 0,
+                    progressPercentage: 0,
+                    totalAttempts: 0,
+                    totalCorrect: 0,
+                    totalIncorrect: 0,
+                    accuracyPercentage: 0
+                };
+            }
+            
+            let solvedProblems = 0;
+            let totalAttempts = 0;
+            let totalCorrect = 0;
+            let totalIncorrect = 0;
+            
+            problems.forEach(problem => {
+                const stat = problemStats[problem.id];
+                if (stat && stat.totalAttempts > 0) {
+                    solvedProblems++;
+                    totalAttempts += stat.totalAttempts;
+                    totalCorrect += stat.correct;
+                    totalIncorrect += stat.incorrect;
+                }
+            });
+            
+            const progressPercentage = problems.length > 0 ? Math.round((solvedProblems / problems.length) * 100) : 0;
+            const accuracyPercentage = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
+            
+            return {
+                totalProblems: problems.length,
+                solvedProblems,
+                progressPercentage,
+                totalAttempts,
+                totalCorrect,
+                totalIncorrect,
+                accuracyPercentage
+            };
         }
         
         // 진행률 백업 기능
@@ -1253,6 +1596,12 @@
             if (savedPath) {
                 document.getElementById('csvPath').value = savedPath;
             }
+            
+            // 오늘 카운트 표시 업데이트
+            updateTodayDisplay();
+            
+            // 초기 화면에서 리셋 버튼 표시 (설정 화면이므로)
+            document.getElementById('resetTodayBtn').style.display = 'flex';
         });
         
         // 경로 변경 시 저장
