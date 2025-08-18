@@ -862,3 +862,396 @@
         
         function renderProblem() {
             const content = document.getElementById('content');
+            selectedOption = null;
+            
+            const stat = problemStats[currentProblem.id];
+            const totalAttempts = stat ? stat.totalAttempts : 0;
+            
+            let html = `
+                <div class="problem-container">
+                    <div class="stats">
+                        <div>📊 전체 문제: ${problems.length}개</div>
+                        <div>🎯 현재 문제 풀이 횟수: ${totalAttempts}회</div>
+                    </div>
+                    <div class="problem-text">${currentProblem.question}</div>
+            `;
+            
+            if (currentProblem.type === 'multiple') {
+                html += renderMultipleChoice();
+            } else {
+                html += renderSubjective();
+            }
+            
+            html += `
+                    <div class="buttons">
+                        <button class="btn btn-primary" onclick="checkAnswer()">정답 확인</button>
+                        <button class="btn btn-secondary" onclick="nextProblem()">다음 문제</button>
+                        <button class="btn btn-secondary" onclick="showConfig()" style="background: #17a2b8;">설정</button>
+                    </div>
+                    <div id="result"></div>
+                </div>
+            `;
+            
+            content.innerHTML = html;
+        }
+        
+        function renderMultipleChoice() {
+            const options = extractOptions(currentProblem.question);
+            let html = '<div class="options">';
+            
+            options.forEach((option, index) => {
+                const symbol = ['①', '②', '③', '④', '⑤'][index];
+                html += `
+                    <div class="option" onclick="selectOption(${index + 1})">
+                        ${symbol} ${option}
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            return html;
+        }
+        
+        function renderSubjective() {
+            return `
+                <input type="text" 
+                       id="subjectiveAnswer" 
+                       class="input-answer" 
+                       placeholder="답을 입력하세요..."
+                       onkeypress="handleKeyPress(event)">
+            `;
+        }
+        
+        function extractOptions(questionText) {
+            const symbols = ['①', '②', '③', '④', '⑤'];
+            const options = [];
+            
+            for (let i = 0; i < symbols.length; i++) {
+                const currentSymbol = symbols[i];
+                const nextSymbol = symbols[i + 1];
+                
+                const startIndex = questionText.indexOf(currentSymbol);
+                if (startIndex === -1) break;
+                
+                let endIndex;
+                if (nextSymbol) {
+                    endIndex = questionText.indexOf(nextSymbol);
+                    if (endIndex === -1) endIndex = questionText.length;
+                } else {
+                    endIndex = questionText.length;
+                }
+                
+                const optionText = questionText.substring(startIndex + 1, endIndex).trim();
+                if (optionText) {
+                    options.push(optionText);
+                }
+            }
+            
+            return options;
+        }
+        
+        function selectOption(optionNumber) {
+            // 이전 선택 해제
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // 새로운 선택
+            const options = document.querySelectorAll('.option');
+            if (options[optionNumber - 1]) {
+                options[optionNumber - 1].classList.add('selected');
+                selectedOption = optionNumber;
+            }
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                checkAnswer();
+            }
+        }
+        
+        function checkAnswer() {
+            let userAnswer = '';
+            
+            if (currentProblem.type === 'multiple') {
+                if (selectedOption === null) {
+                    alert('답을 선택해주세요!');
+                    return;
+                }
+                userAnswer = selectedOption.toString();
+            } else {
+                const input = document.getElementById('subjectiveAnswer');
+                userAnswer = input.value.trim();
+                if (!userAnswer) {
+                    alert('답을 입력해주세요!');
+                    return;
+                }
+            }
+            
+            const correctAnswer = currentProblem.answer.toString().trim();
+            const isCorrect = userAnswer.toLowerCase() === correctAnswer.toLowerCase();
+            
+            showResult(isCorrect, correctAnswer);
+            hasAnswered = true;
+        }
+        
+        function showResult(isCorrect, correctAnswer) {
+            const resultDiv = document.getElementById('result');
+            
+            // 답안 기록 추가
+            let userAnswer = '';
+            if (currentProblem.type === 'multiple') {
+                userAnswer = selectedOption.toString();
+            } else {
+                userAnswer = document.getElementById('subjectiveAnswer').value.trim();
+            }
+            
+            addAnswerRecord(currentProblem.id, isCorrect, userAnswer, correctAnswer);
+            
+            let resultHTML = '';
+            if (isCorrect) {
+                resultHTML = '<div class="result correct">🎉 정답입니다! 잘했어요!</div>';
+            } else {
+                resultHTML = `
+                    <div class="result incorrect">
+                        ❌ 틀렸습니다.<br>
+                        정답: <strong>${correctAnswer}</strong>
+                    </div>
+                `;
+            }
+            
+            // 히스토리 추가
+            resultHTML += `
+                <div class="result-section">
+                    <div class="history-title">📈 이 문제 풀이 기록</div>
+                    ${generateHistoryHTML(currentProblem.id)}
+                </div>
+            `;
+            
+            resultDiv.innerHTML = resultHTML;
+            
+            // 스크롤을 결과로 이동
+            setTimeout(() => {
+                resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+        
+        function nextProblem() {
+            showRandomProblem();
+        }
+        
+        function showConfig() {
+            document.getElementById('configSection').style.display = 'block';
+            document.getElementById('content').innerHTML = 
+                '<div class="no-problems">설정을 변경하고 새로운 문제 파일을 불러오세요.</div>';
+            document.getElementById('attemptCounter').style.display = 'none';
+        }
+        
+        // 진행률 백업 기능
+        function exportProgress() {
+            const allData = {};
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('problemStats_') || key === 'lastCSVPath') {
+                    allData[key] = localStorage.getItem(key);
+                }
+            }
+            
+            if (Object.keys(allData).length === 0) {
+                alert('저장된 진행률 데이터가 없습니다.');
+                return;
+            }
+            
+            const backupData = {
+                version: '2.0',
+                timestamp: new Date().toISOString(),
+                data: allData
+            };
+            
+            const blob = new Blob([JSON.stringify(backupData, null, 2)], {
+                type: 'application/json'
+            });
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `problem_progress_${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('진행률이 다운로드되었습니다! 📥');
+        }
+        
+        function importProgress(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    
+                    if (!backupData.data) {
+                        throw new Error('올바르지 않은 백업 파일 형식입니다.');
+                    }
+                    
+                    const hasCurrentData = Object.keys(localStorage).some(key => 
+                        key.startsWith('problemStats_')
+                    );
+                    
+                    let shouldProceed = true;
+                    if (hasCurrentData) {
+                        shouldProceed = confirm(
+                            '현재 저장된 진행률이 있습니다.\n' +
+                            '복원하면 현재 데이터와 병합됩니다. 계속하시겠습니까?\n\n' +
+                            '※ 같은 문제의 경우 히스토리가 합쳐집니다.'
+                        );
+                    }
+                    
+                    if (!shouldProceed) return;
+                    
+                    let restoredCount = 0;
+                    for (const [key, value] of Object.entries(backupData.data)) {
+                        if (key.startsWith('problemStats_')) {
+                            const existingData = localStorage.getItem(key);
+                            if (existingData) {
+                                try {
+                                    const existing = JSON.parse(existingData);
+                                    const backup = JSON.parse(value);
+                                    
+                                    for (const [problemId, backupStat] of Object.entries(backup)) {
+                                        if (existing[problemId]) {
+                                            existing[problemId].totalAttempts = Math.max(
+                                                existing[problemId].totalAttempts || 0,
+                                                backupStat.totalAttempts || 0
+                                            );
+                                            existing[problemId].correct = Math.max(
+                                                existing[problemId].correct || 0,
+                                                backupStat.correct || 0
+                                            );
+                                            existing[problemId].incorrect = Math.max(
+                                                existing[problemId].incorrect || 0,
+                                                backupStat.incorrect || 0
+                                            );
+                                            
+                                            const combinedHistory = [
+                                                ...(existing[problemId].history || []),
+                                                ...(backupStat.history || [])
+                                            ];
+                                            
+                                            const uniqueHistory = combinedHistory
+                                                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                                                .slice(0, 20);
+                                            
+                                            existing[problemId].history = uniqueHistory;
+                                        } else {
+                                            existing[problemId] = backupStat;
+                                        }
+                                    }
+                                    
+                                    localStorage.setItem(key, JSON.stringify(existing));
+                                } catch (e) {
+                                    localStorage.setItem(key, value);
+                                }
+                            } else {
+                                localStorage.setItem(key, value);
+                            }
+                            restoredCount++;
+                        } else {
+                            localStorage.setItem(key, value);
+                        }
+                    }
+                    
+                    if (currentProblem) {
+                        loadProblemStats();
+                        updateAttemptCounter();
+                        const statsDiv = document.querySelector('.stats');
+                        if (statsDiv) {
+                            const stat = problemStats[currentProblem.id];
+                            const totalAttempts = stat ? stat.totalAttempts : 0;
+                            statsDiv.innerHTML = `
+                                <div>📊 전체 문제: ${problems.length}개</div>
+                                <div>🎯 현재 문제 풀이 횟수: ${totalAttempts}회</div>
+                            `;
+                        }
+                    }
+                    
+                    alert(`진행률이 성공적으로 복원되었습니다! 📤\n복원된 파일: ${restoredCount}개`);
+                    
+                } catch (error) {
+                    alert('백업 파일을 읽을 수 없습니다.\n오류: ' + error.message);
+                }
+                
+                event.target.value = '';
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        function clearAllProgress() {
+            const hasData = Object.keys(localStorage).some(key => 
+                key.startsWith('problemStats_')
+            );
+            
+            if (!hasData) {
+                alert('삭제할 진행률 데이터가 없습니다.');
+                return;
+            }
+            
+            const confirmed = confirm(
+                '⚠️ 정말로 모든 풀이 기록을 삭제하시겠습니까?\n\n' +
+                '이 작업은 되돌릴 수 없습니다.\n' +
+                '삭제하기 전에 백업을 권장합니다.'
+            );
+            
+            if (confirmed) {
+                const keysToDelete = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('problemStats_')) {
+                        keysToDelete.push(key);
+                    }
+                }
+                
+                keysToDelete.forEach(key => localStorage.removeItem(key));
+                
+                problemStats = {};
+                if (currentProblem) {
+                    updateAttemptCounter();
+                }
+                
+                alert('모든 풀이 기록이 삭제되었습니다. 🗑️');
+            }
+        }
+        
+        // 키보드 단축키
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && event.ctrlKey) {
+                event.preventDefault();
+                nextProblem();
+            } else if (event.key === 'Enter' && !document.activeElement.matches('input, textarea')) {
+                event.preventDefault();
+                if (document.querySelector('.btn-primary')) {
+                    checkAnswer();
+                }
+            }
+        });
+        
+        // 페이지 로드 시 저장된 경로가 있으면 자동 로드
+        window.addEventListener('load', function() {
+            const savedPath = localStorage.getItem('lastCSVPath');
+            if (savedPath) {
+                document.getElementById('csvPath').value = savedPath;
+            }
+        });
+        
+        // 경로 변경 시 저장
+        document.getElementById('csvPath').addEventListener('change', function() {
+            localStorage.setItem('lastCSVPath', this.value);
+        });
+    </script>
+</body>
+</html>
