@@ -263,10 +263,18 @@
             transform: translateY(-1px);
         }
         
-        .option.correct-answer {
-            background: linear-gradient(135deg, #28a745, #20c997);
+        .option.selected {
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            border-color: #28a745;
+            border-color: #667eea;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .option.correct-answer {
+            background: linear-gradient(135deg, #28a745, #20c997) !important;
+            color: white !important;
+            border-color: #28a745 !important;
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
         }
@@ -1169,8 +1177,8 @@
             
             html += `
                     <div class="buttons">
+                        <button class="btn btn-secondary" onclick="showConfig()" style="background: #17a2b8;">메인 화면</button>
                         <button class="btn btn-hint" onclick="showAnswer()">💡 정답 확인</button>
-                        <button class="btn btn-secondary" onclick="showConfig()" style="background: #17a2b8;">설정</button>
                     </div>
                     <div id="result"></div>
                 </div>
@@ -1288,6 +1296,7 @@
                 const options = document.querySelectorAll('.option');
                 options.forEach((opt, index) => {
                     opt.classList.add('disabled');
+                    opt.classList.remove('selected'); // selected 클래스 제거
                     if (index + 1 === parseInt(correctAnswer)) {
                         opt.classList.add('correct-answer');
                     }
@@ -1384,6 +1393,7 @@
                 // 정답인 경우: 모든 선택지 비활성화하고 정답 표시
                 options.forEach((opt, index) => {
                     opt.classList.add('disabled');
+                    opt.classList.remove('selected'); // selected 클래스 제거
                     if (index + 1 === correctAnswer) {
                         opt.classList.add('correct-answer');
                     }
@@ -1399,6 +1409,7 @@
                 options.forEach((opt, index) => {
                     if (index + 1 === parseInt(userAnswer)) {
                         opt.classList.add('wrong-answer');
+                        opt.classList.remove('selected'); // selected 클래스 제거
                     }
                 });
                 
