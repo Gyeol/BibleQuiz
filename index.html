@@ -1287,7 +1287,7 @@
             const correctAnswer = currentProblem.answer.toString().trim();
             const isCorrect = userAnswer.toLowerCase() === correctAnswer.toLowerCase();
             
-            // 시도 횟수 기록
+            // 시도 횟수만 기록 (카운트 증가 제거)
             addAnswerRecord(currentProblem.id);
             
             // 카운터 업데이트
@@ -1368,7 +1368,7 @@
                 }
             }
             
-            // 시도 횟수 기록 (정답 확인도 시도로 카운트)
+            // 시도 횟수만 기록 (카운트 증가 제거)
             addAnswerRecord(currentProblem.id);
             updateAttemptCounter();
             
@@ -1445,7 +1445,7 @@
             const correctAnswer = parseInt(currentProblem.answer.toString().trim());
             const isCorrect = parseInt(userAnswer) === correctAnswer;
             
-            // 시도 횟수 기록
+            // 시도 횟수만 기록 (카운트 증가 제거)
             addAnswerRecord(currentProblem.id);
             
             // 카운터 업데이트
