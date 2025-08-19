@@ -1208,16 +1208,13 @@
             const stat = problemStats[currentProblem.id];
             const attempts = stat ? stat.attempts : 0;
             
-            // 문제 텍스트에서 선택지 부분 제거
-            const questionTextOnly = extractQuestionOnly(currentProblem.question);
-            
             let html = `
                 <div class="problem-container">
                     <div class="stats">
                         <div>📊 전체 문제: ${problems.length}개</div>
                         <div>🎯 이 문제 시도 횟수: ${attempts}회</div>
                     </div>
-                    <div class="problem-text">${questionTextOnly}</div>
+                    <div class="problem-text">${currentProblem.question}</div>
             `;
             
             if (currentProblem.type === 'multiple') {
@@ -1314,8 +1311,11 @@
                 // 다음 문제 버튼 활성화
                 enableNextButton();
                 
-                // 결과 영역은 비워둠 (버튼 중복 방지)
-                resultDiv.innerHTML = '';
+                resultDiv.innerHTML = `
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
+                    </div>
+                `;
             } else {
                 input.classList.add('wrong-answer');
                 resultDiv.innerHTML = `
@@ -1375,9 +1375,12 @@
             // 다음 문제 버튼 활성화
             enableNextButton();
             
-            // 결과 영역은 비워둠 (버튼 중복 방지)
             const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = '';
+            resultDiv.innerHTML = `
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
+                </div>
+            `;
         }
         
         function extractOptions(questionText) {
@@ -1447,7 +1450,7 @@
                 // 정답인 경우: 모든 선택지 비활성화하고 정답 표시
                 options.forEach((opt, index) => {
                     opt.classList.add('disabled');
-                    opt.classList.remove('selected');
+                    opt.classList.remove('selected'); // selected 클래스 제거
                     if (index + 1 === correctAnswer) {
                         opt.classList.add('correct-answer');
                     }
@@ -1456,21 +1459,13 @@
                 // 다음 문제 버튼 활성화
                 enableNextButton();
                 
-                // 결과 영역은 비워둠 (버튼 중복 방지)
-                resultDiv.innerHTML = '';
+                resultDiv.innerHTML = `
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
+                    </div>
+                `;
             } else {
                 // 오답인 경우: 선택한 것만 빨간색 표시, 다른 선택지는 계속 선택 가능
-                options.forEach((opt, index) => {
-                    if (index + 1 === parseInt(userAnswer)) {
-                        opt.classList.add('wrong-answer');
-                        opt.classList.remove('selected');
-                    }
-                });
-                
-                // 결과 영역은 비워둠
-                resultDiv.innerHTML = '';
-            }
-        }만 빨간색 표시, 다른 선택지는 계속 선택 가능
                 options.forEach((opt, index) => {
                     if (index + 1 === parseInt(userAnswer)) {
                         opt.classList.add('wrong-answer');
@@ -1856,9 +1851,6 @@
             
             // 오늘 카운트 표시 업데이트
             updateTodayDisplay();
-            
-            // 전체 카운트 초기화 (처음 사용 시)
-            getTotalCount();
             
             // 초기 화면에서 리셋 버튼 표시 (설정 화면이므로)
             document.getElementById('resetTodayBtn').style.display = 'flex';
