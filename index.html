@@ -1173,6 +1173,28 @@
             showRandomProblem();
         }
         
+        // 문제 텍스트에서 선택지 부분 제거
+        function extractQuestionText(fullQuestion) {
+            const symbols = ['①', '②', '③', '④', '⑤'];
+            
+            // 특수문자가 나오는 첫 번째 위치 찾기
+            let firstSymbolIndex = fullQuestion.length;
+            
+            symbols.forEach(symbol => {
+                const index = fullQuestion.indexOf(symbol);
+                if (index !== -1 && index < firstSymbolIndex) {
+                    firstSymbolIndex = index;
+                }
+            });
+            
+            // 특수문자 앞부분만 추출 (문제 부분)
+            if (firstSymbolIndex < fullQuestion.length) {
+                return fullQuestion.substring(0, firstSymbolIndex).trim();
+            }
+            
+            return fullQuestion.trim();
+        }
+        
         function detectProblemType(questionText) {
             // ①②③④ 기호가 있으면 객관식
             const hasChoiceSymbols = /[①②③④⑤]/g.test(questionText);
@@ -1208,13 +1230,16 @@
             const stat = problemStats[currentProblem.id];
             const attempts = stat ? stat.attempts : 0;
             
+            // 문제 텍스트에서 선택지 부분 제거
+            const questionText = extractQuestionText(currentProblem.question);
+            
             let html = `
                 <div class="problem-container">
                     <div class="stats">
                         <div>📊 전체 문제: ${problems.length}개</div>
                         <div>🎯 이 문제 시도 횟수: ${attempts}회</div>
                     </div>
-                    <div class="problem-text">${currentProblem.question}</div>
+                    <div class="problem-text">${questionText}</div>
             `;
             
             if (currentProblem.type === 'multiple') {
@@ -1311,11 +1336,8 @@
                 // 다음 문제 버튼 활성화
                 enableNextButton();
                 
-                resultDiv.innerHTML = `
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
-                    </div>
-                `;
+                // 결과 영역은 비워둠 (버튼 중복 방지)
+                resultDiv.innerHTML = '';
             } else {
                 input.classList.add('wrong-answer');
                 resultDiv.innerHTML = `
@@ -1375,12 +1397,9 @@
             // 다음 문제 버튼 활성화
             enableNextButton();
             
+            // 결과 영역은 비워둠 (버튼 중복 방지)
             const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = `
-                <div style="text-align: center; margin-top: 20px;">
-                    <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
-                </div>
-            `;
+            resultDiv.innerHTML = '';
         }
         
         function extractOptions(questionText) {
@@ -1459,13 +1478,21 @@
                 // 다음 문제 버튼 활성화
                 enableNextButton();
                 
-                resultDiv.innerHTML = `
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
-                    </div>
-                `;
+                // 결과 영역은 비워둠 (버튼 중복 방지)
+                resultDiv.innerHTML = '';
             } else {
                 // 오답인 경우: 선택한 것만 빨간색 표시, 다른 선택지는 계속 선택 가능
+                options.forEach((opt, index) => {
+                    if (index + 1 === parseInt(userAnswer)) {
+                        opt.classList.add('wrong-answer');
+                        opt.classList.remove('selected'); // selected 클래스 제거
+                    }
+                });
+                
+                // 결과 영역은 비워둠 (다시 시도 버튼 없음)
+                resultDiv.innerHTML = '';
+            }
+        }만 빨간색 표시, 다른 선택지는 계속 선택 가능
                 options.forEach((opt, index) => {
                     if (index + 1 === parseInt(userAnswer)) {
                         opt.classList.add('wrong-answer');
