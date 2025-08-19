@@ -1023,10 +1023,6 @@
         function addAnswerRecord(problemId) {
             initProblemStat(problemId);
             problemStats[problemId].attempts++;
-            
-            // 문제를 시도할 때마다 푼 문제 카운트 증가
-            incrementTodayCount();
-            
             saveProblemStats();
         }
         
@@ -1572,6 +1568,8 @@
         }
         
         function nextProblem() {
+            // 다음 문제로 넘어갈 때 푼 문제 카운트 증가
+            incrementTodayCount();
             showRandomProblem();
         }
         
