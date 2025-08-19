@@ -329,8 +329,12 @@
         .buttons {
             display: flex;
             gap: 12px;
-            justify-content: center;
+            align-items: center;
             flex-wrap: wrap;
+        }
+        
+        .spacer {
+            flex: 1;
         }
         
         .btn {
@@ -562,9 +566,9 @@
             background: linear-gradient(135deg, #d1ecf1, #bee5eb);
         }
         
-        .stat-card.attempts {
-            border-color: #6f42c1;
-            background: linear-gradient(135deg, #e2d9f3, #d1c4e9);
+        .stat-card.today {
+            border-color: #ff6b6b;
+            background: linear-gradient(135deg, #ffe0e0, #ffcccb);
         }
         
         .stat-number {
@@ -710,6 +714,10 @@
                 flex-direction: column;
                 align-items: center;
                 gap: 10px;
+            }
+            
+            .spacer {
+                display: none;
             }
             
             .btn {
@@ -1177,8 +1185,10 @@
             
             html += `
                     <div class="buttons">
-                        <button class="btn btn-secondary" onclick="showConfig()" style="background: #17a2b8;">메인 화면</button>
                         <button class="btn btn-hint" onclick="showAnswer()">💡 정답 확인</button>
+                        <button class="btn btn-secondary" onclick="nextProblem()">다음 문제</button>
+                        <div class="spacer"></div>
+                        <button class="btn btn-secondary" onclick="showConfig()" style="background: #17a2b8;">메인 화면</button>
                     </div>
                     <div id="result"></div>
                 </div>
@@ -1533,15 +1543,15 @@
                             <div class="stat-number">${totalStats.progressPercentage}%</div>
                             <div class="stat-label">진행률</div>
                         </div>
-                        <div class="stat-card attempts">
-                            <div class="stat-number">${totalStats.totalAttempts}</div>
-                            <div class="stat-label">총 시도 횟수</div>
+                        <div class="stat-card today">
+                            <div class="stat-number">${totalStats.todayCount}</div>
+                            <div class="stat-label">카운트 합계</div>
                         </div>
                     </div>
                     <div class="stats-details">
                         <div class="detail-item">
                             <span class="detail-label">오늘 푼 문제:</span>
-                            <span class="detail-value today-color">${getTodayCount()}문제</span>
+                            <span class="detail-value today-color">${totalStats.todayCount}문제</span>
                         </div>
                         <div class="today-reset-section">
                             <button class="today-reset-btn" onclick="resetTodayCount()">🔄 오늘 카운트 초기화</button>
