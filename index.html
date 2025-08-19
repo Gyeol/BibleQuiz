@@ -1173,28 +1173,6 @@
             showRandomProblem();
         }
         
-        // 문제 텍스트에서 선택지 부분 제거
-        function extractQuestionText(fullQuestion) {
-            const symbols = ['①', '②', '③', '④', '⑤'];
-            
-            // 특수문자가 나오는 첫 번째 위치 찾기
-            let firstSymbolIndex = fullQuestion.length;
-            
-            symbols.forEach(symbol => {
-                const index = fullQuestion.indexOf(symbol);
-                if (index !== -1 && index < firstSymbolIndex) {
-                    firstSymbolIndex = index;
-                }
-            });
-            
-            // 특수문자 앞부분만 추출 (문제 부분)
-            if (firstSymbolIndex < fullQuestion.length) {
-                return fullQuestion.substring(0, firstSymbolIndex).trim();
-            }
-            
-            return fullQuestion.trim();
-        }
-        
         function detectProblemType(questionText) {
             // ①②③④ 기호가 있으면 객관식
             const hasChoiceSymbols = /[①②③④⑤]/g.test(questionText);
@@ -1231,7 +1209,7 @@
             const attempts = stat ? stat.attempts : 0;
             
             // 문제 텍스트에서 선택지 부분 제거
-            const questionText = extractQuestionText(currentProblem.question);
+            const questionTextOnly = extractQuestionOnly(currentProblem.question);
             
             let html = `
                 <div class="problem-container">
@@ -1239,7 +1217,7 @@
                         <div>📊 전체 문제: ${problems.length}개</div>
                         <div>🎯 이 문제 시도 횟수: ${attempts}회</div>
                     </div>
-                    <div class="problem-text">${questionText}</div>
+                    <div class="problem-text">${questionTextOnly}</div>
             `;
             
             if (currentProblem.type === 'multiple') {
@@ -1878,6 +1856,9 @@
             
             // 오늘 카운트 표시 업데이트
             updateTodayDisplay();
+            
+            // 전체 카운트 초기화 (처음 사용 시)
+            getTotalCount();
             
             // 초기 화면에서 리셋 버튼 표시 (설정 화면이므로)
             document.getElementById('resetTodayBtn').style.display = 'flex';
