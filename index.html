@@ -543,8 +543,8 @@
         
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
             margin-bottom: 25px;
         }
         
@@ -848,8 +848,8 @@
     <div class="container">
         <div class="header">
             <div class="today-counter">
-                오늘: <span id="todayCount">0</span>문제
-                <button class="reset-today-btn" id="resetTodayBtn" onclick="resetTodayCount()" title="오늘 카운트 초기화" style="display: none;">🔄</button>
+                푼 문제: <span id="todayCount">0</span>개
+                <button class="reset-today-btn" id="resetTodayBtn" onclick="resetTodayCount()" title="푼 문제 카운트 초기화" style="display: none;">🔄</button>
             </div>
             <h1>📚 문제 풀이 사이트</h1>
             <p>CSV 파일 경로를 설정하고 문제를 풀어보세요!</p>
@@ -920,21 +920,12 @@
             }
         }
         
-        // 오늘 날짜 가져오기 (YYYY-MM-DD 형식)
-        function getTodayDateString() {
-            const today = new Date();
-            return today.getFullYear() + '-' + 
-                   String(today.getMonth() + 1).padStart(2, '0') + '-' + 
-                   String(today.getDate()).padStart(2, '0');
-        }
-        
-        // 오늘 카운트 가져오기
+        // 오늘 푼 문제 카운트 가져오기 (날짜와 무관하게 누적)
         function getTodayCount() {
-            const todayKey = 'todayCount_' + getTodayDateString();
-            return parseInt(localStorage.getItem(todayKey) || '0');
+            return parseInt(localStorage.getItem('todayCount') || '0');
         }
         
-        // 전체 카운트 가져오기
+        // 전체 카운트 합계 가져오기
         function getTotalCount() {
             return parseInt(localStorage.getItem('totalCount') || '0');
         }
@@ -945,11 +936,10 @@
             localStorage.setItem('totalCount', (currentTotal + amount).toString());
         }
         
-        // 오늘 카운트 증가
+        // 오늘 푼 문제 카운트 증가
         function incrementTodayCount() {
-            const todayKey = 'todayCount_' + getTodayDateString();
             const currentCount = getTodayCount();
-            localStorage.setItem(todayKey, (currentCount + 1).toString());
+            localStorage.setItem('todayCount', (currentCount + 1).toString());
             updateTodayDisplay();
         }
         
@@ -961,7 +951,7 @@
             }
         }
         
-        // 오늘 카운트 초기화
+        // 오늘 푼 문제 카운트 초기화 (수동으로만 실행)
         function resetTodayCount() {
             const todayCount = getTodayCount();
             
@@ -971,7 +961,7 @@
             }
             
             const confirmed = confirm(
-                '⚠️ 정말로 오늘의 풀이 카운트를 초기화하시겠습니까?\n\n' +
+                '⚠️ 정말로 오늘 푼 문제 카운트를 초기화하시겠습니까?\n\n' +
                 '현재 오늘 푼 문제: ' + todayCount + '문제\n' +
                 '이 카운트가 전체 카운트 합계에 추가됩니다.'
             );
@@ -981,8 +971,7 @@
                 incrementTotalCount(todayCount);
                 
                 // 오늘 카운트 초기화
-                const todayKey = 'todayCount_' + getTodayDateString();
-                localStorage.setItem(todayKey, '0');
+                localStorage.setItem('todayCount', '0');
                 updateTodayDisplay();
                 
                 // 통계 화면이 열려있다면 새로고침
@@ -991,7 +980,7 @@
                     showConfig();
                 }
                 
-                alert(`✅ 오늘의 카운트가 초기화되었습니다!\n전체 카운트 합계: ${getTotalCount()}문제`);
+                alert(`✅ 오늘 푼 문제 카운트가 초기화되었습니다!\n전체 카운트 합계: ${getTotalCount()}문제`);
             }
         }
         
@@ -1034,6 +1023,10 @@
         function addAnswerRecord(problemId) {
             initProblemStat(problemId);
             problemStats[problemId].attempts++;
+            
+            // 문제를 시도할 때마다 푼 문제 카운트 증가
+            incrementTodayCount();
+            
             saveProblemStats();
         }
         
@@ -1550,9 +1543,6 @@
             
             addAnswerRecord(currentProblem.id, isCorrect, userAnswer, correctAnswer);
             
-            // 오늘 카운트 증가 (정답/오답 상관없이 문제를 풀었으면 증가)
-            incrementTodayCount();
-            
             let resultHTML = '';
             if (isCorrect) {
                 resultHTML = '<div class="result correct">🎉 정답입니다! 잘했어요!</div>';
@@ -1582,8 +1572,6 @@
         }
         
         function nextProblem() {
-            // 다음 문제로 넘어갈 때 오늘 카운트 증가
-            incrementTodayCount();
             showRandomProblem();
         }
         
@@ -1605,17 +1593,25 @@
                             <div class="stat-label">전체 문제</div>
                         </div>
                         <div class="stat-card today">
-                            <div class="stat-number">${totalStats.totalCount}</div>
-                            <div class="stat-label">카운트 합계</div>
+                            <div class="stat-number">${totalStats.currentCount}</div>
+                            <div class="stat-label">현재 푼 문제</div>
+                        </div>
+                        <div class="stat-card progress">
+                            <div class="stat-number">${totalStats.accumulatedTotal}</div>
+                            <div class="stat-label">누적 합계</div>
                         </div>
                     </div>
                     <div class="stats-details">
                         <div class="detail-item">
-                            <span class="detail-label">오늘 푼 문제:</span>
+                            <span class="detail-label">현재 푼 문제:</span>
                             <span class="detail-value today-color">${getTodayCount()}문제</span>
                         </div>
+                        <div class="detail-item">
+                            <span class="detail-label">누적 합계:</span>
+                            <span class="detail-value correct-color">${getTotalCount()}문제</span>
+                        </div>
                         <div class="today-reset-section">
-                            <button class="today-reset-btn" onclick="resetTodayCount()">🔄 오늘 카운트 초기화</button>
+                            <button class="today-reset-btn" onclick="resetTodayCount()">🔄 푼 문제 카운트 초기화</button>
                         </div>
                     </div>
                 </div>
@@ -1628,11 +1624,13 @@
         // 전체 통계 계산
         function calculateTotalStats() {
             const totalProblems = problems ? problems.length : 0;
-            const totalCount = getTodayCount() + getTotalCount(); // 오늘 카운트 + 전체 카운트 합계
+            const currentCount = getTodayCount(); // 현재 푼 문제
+            const accumulatedTotal = getTotalCount(); // 누적 합계
             
             return {
                 totalProblems: totalProblems,
-                totalCount: totalCount || 0  // undefined 방지를 위해 기본값 0 설정
+                currentCount: currentCount || 0,
+                accumulatedTotal: accumulatedTotal || 0
             };
         }
         
@@ -1642,7 +1640,7 @@
             
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                if (key.startsWith('problemStats_') || key === 'lastCSVPath' || key === 'totalCount' || key.startsWith('todayCount_')) {
+                if (key.startsWith('problemStats_') || key === 'lastCSVPath' || key === 'totalCount' || key === 'todayCount') {
                     allData[key] = localStorage.getItem(key);
                 }
             }
@@ -1820,7 +1818,7 @@
                 document.getElementById('csvPath').value = savedPath;
             }
             
-            // 오늘 카운트 표시 업데이트
+            // 푼 문제 카운트 표시 업데이트
             updateTodayDisplay();
             
             // 초기 화면에서 리셋 버튼 표시 (설정 화면이므로)
