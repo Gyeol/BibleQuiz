@@ -1311,11 +1311,8 @@
                 // 다음 문제 버튼 활성화
                 enableNextButton();
                 
-                resultDiv.innerHTML = `
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
-                    </div>
-                `;
+                // 결과 영역은 비워둠 (버튼 중복 방지)
+                resultDiv.innerHTML = '';
             } else {
                 input.classList.add('wrong-answer');
                 resultDiv.innerHTML = `
@@ -1375,12 +1372,9 @@
             // 다음 문제 버튼 활성화
             enableNextButton();
             
+            // 결과 영역은 비워둠 (버튼 중복 방지)
             const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = `
-                <div style="text-align: center; margin-top: 20px;">
-                    <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
-                </div>
-            `;
+            resultDiv.innerHTML = '';
         }
         
         function extractOptions(questionText) {
@@ -1459,13 +1453,21 @@
                 // 다음 문제 버튼 활성화
                 enableNextButton();
                 
-                resultDiv.innerHTML = `
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
-                    </div>
-                `;
+                // 결과 영역은 비워둠 (버튼 중복 방지)
+                resultDiv.innerHTML = '';
             } else {
                 // 오답인 경우: 선택한 것만 빨간색 표시, 다른 선택지는 계속 선택 가능
+                options.forEach((opt, index) => {
+                    if (index + 1 === parseInt(userAnswer)) {
+                        opt.classList.add('wrong-answer');
+                        opt.classList.remove('selected'); // selected 클래스 제거
+                    }
+                });
+                
+                // 결과 영역은 비워둠 (다시 시도 버튼 없음)
+                resultDiv.innerHTML = '';
+            }
+        }만 빨간색 표시, 다른 선택지는 계속 선택 가능
                 options.forEach((opt, index) => {
                     if (index + 1 === parseInt(userAnswer)) {
                         opt.classList.add('wrong-answer');
@@ -1851,6 +1853,9 @@
             
             // 오늘 카운트 표시 업데이트
             updateTodayDisplay();
+            
+            // 전체 카운트 초기화 (undefined 방지)
+            getTotalCount();
             
             // 초기 화면에서 리셋 버튼 표시 (설정 화면이므로)
             document.getElementById('resetTodayBtn').style.display = 'flex';
