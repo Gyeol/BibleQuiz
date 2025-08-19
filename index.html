@@ -393,6 +393,12 @@
             box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
         }
         
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
         .subjective-buttons {
             text-align: center;
             margin: 15px 0;
@@ -899,6 +905,21 @@
         let csvPath = '';
         let hasAnswered = false;
         
+        // 다음 문제 버튼 활성화/비활성화
+        function enableNextButton() {
+            const nextBtn = document.getElementById('nextProblemBtn');
+            if (nextBtn) {
+                nextBtn.disabled = false;
+            }
+        }
+        
+        function disableNextButton() {
+            const nextBtn = document.getElementById('nextProblemBtn');
+            if (nextBtn) {
+                nextBtn.disabled = true;
+            }
+        }
+        
         // 오늘 날짜 가져오기 (YYYY-MM-DD 형식)
         function getTodayDateString() {
             const today = new Date();
@@ -1186,7 +1207,7 @@
             html += `
                     <div class="buttons">
                         <button class="btn btn-hint" onclick="showAnswer()">💡 정답 확인</button>
-                        <button class="btn btn-secondary" onclick="nextProblem()">다음 문제</button>
+                        <button class="btn btn-secondary" id="nextProblemBtn" onclick="nextProblem()" disabled>다음 문제</button>
                         <div class="spacer"></div>
                         <button class="btn btn-secondary" onclick="showConfig()" style="background: #17a2b8;">메인 화면</button>
                     </div>
@@ -1267,6 +1288,10 @@
             
             if (isCorrect) {
                 input.classList.add('correct-answer');
+                
+                // 다음 문제 버튼 활성화
+                enableNextButton();
+                
                 resultDiv.innerHTML = `
                     <div style="text-align: center; margin-top: 20px;">
                         <button class="next-problem-btn" onclick="nextProblem()">다음 문제 →</button>
@@ -1327,6 +1352,9 @@
             // 시도 횟수 기록 (정답 확인도 시도로 카운트)
             addAnswerRecord(currentProblem.id);
             updateAttemptCounter();
+            
+            // 다음 문제 버튼 활성화
+            enableNextButton();
             
             const resultDiv = document.getElementById('result');
             resultDiv.innerHTML = `
@@ -1408,6 +1436,9 @@
                         opt.classList.add('correct-answer');
                     }
                 });
+                
+                // 다음 문제 버튼 활성화
+                enableNextButton();
                 
                 resultDiv.innerHTML = `
                     <div style="text-align: center; margin-top: 20px;">
@@ -1524,6 +1555,9 @@
             
             // 설정 화면에서는 리셋 버튼 표시
             document.getElementById('resetTodayBtn').style.display = 'flex';
+            
+            // 통계 계산 전에 데이터 로드
+            loadProblemStats();
             
             // 전체 통계 계산 및 표시
             const totalStats = calculateTotalStats();
