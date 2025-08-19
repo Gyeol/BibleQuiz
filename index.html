@@ -1447,7 +1447,7 @@
                 // 정답인 경우: 모든 선택지 비활성화하고 정답 표시
                 options.forEach((opt, index) => {
                     opt.classList.add('disabled');
-                    opt.classList.remove('selected'); // selected 클래스 제거
+                    opt.classList.remove('selected');
                     if (index + 1 === correctAnswer) {
                         opt.classList.add('correct-answer');
                     }
@@ -1463,11 +1463,11 @@
                 options.forEach((opt, index) => {
                     if (index + 1 === parseInt(userAnswer)) {
                         opt.classList.add('wrong-answer');
-                        opt.classList.remove('selected'); // selected 클래스 제거
+                        opt.classList.remove('selected');
                     }
                 });
                 
-                // 결과 영역은 비워둠 (다시 시도 버튼 없음)
+                // 결과 영역은 비워둠
                 resultDiv.innerHTML = '';
             }
         }만 빨간색 표시, 다른 선택지는 계속 선택 가능
