@@ -1026,38 +1026,19 @@
             saveProblemStats();
         }
         
-        // 히스토리 HTML 생성
+        // 히스토리 HTML 생성 (간소화)
         function generateHistoryHTML(problemId) {
             const stat = problemStats[problemId];
-            if (!stat || stat.history.length === 0) {
+            if (!stat || stat.attempts === 0) {
                 return '<div class="no-history">📝 아직 풀이 기록이 없습니다.</div>';
             }
             
             let html = `
                 <div class="history-summary">
-                    📊 <strong>총 ${stat.totalAttempts}번</strong> | 
-                    ✅ <strong>${stat.correct}번 정답</strong> | 
-                    ❌ <strong>${stat.incorrect}번 오답</strong> | 
-                    🎯 <strong>정답률 ${Math.round((stat.correct / stat.totalAttempts) * 100)}%</strong>
+                    📊 <strong>총 ${stat.attempts}번 시도</strong>
                 </div>
-                <div class="history-title">📝 최근 풀이 기록:</div>
-                <div class="history-list">
             `;
             
-            stat.history.forEach((record, index) => {
-                const statusIcon = record.isCorrect ? '✅' : '❌';
-                const statusClass = record.isCorrect ? 'correct' : 'incorrect';
-                html += `
-                    <div class="history-item ${statusClass}">
-                        <span class="history-status">${statusIcon}</span>
-                        <span class="history-answer">내 답: <strong>${record.userAnswer}</strong></span>
-                        ${!record.isCorrect ? `<span class="history-correct">정답: <strong>${record.correctAnswer}</strong></span>` : ''}
-                        <span class="history-time">${record.timestamp}</span>
-                    </div>
-                `;
-            });
-            
-            html += '</div>';
             return html;
         }
         
@@ -1208,13 +1189,18 @@
             const stat = problemStats[currentProblem.id];
             const attempts = stat ? stat.attempts : 0;
             
+            // 객관식인 경우 문제 텍스트에서 선택지 부분 제거
+            const displayQuestion = currentProblem.type === 'multiple' 
+                ? getQuestionTextOnly(currentProblem.question)
+                : currentProblem.question;
+            
             let html = `
                 <div class="problem-container">
                     <div class="stats">
                         <div>📊 전체 문제: ${problems.length}개</div>
                         <div>🎯 이 문제 시도 횟수: ${attempts}회</div>
                     </div>
-                    <div class="problem-text">${currentProblem.question}</div>
+                    <div class="problem-text">${displayQuestion}</div>
             `;
             
             if (currentProblem.type === 'multiple') {
@@ -1392,14 +1378,11 @@
                     endIndex = questionText.length;
                 }
                 
+                // 선택지 텍스트 추출 (특수문자 제외하고 내용만)
                 let optionText = questionText.substring(startIndex + 1, endIndex).trim();
                 
-                // 개선: 선택지 텍스트에서 특수문자나 불필요한 문자 제거
-                // 줄바꿈, 탭, 연속된 공백 제거
+                // 줄바꿈, 탭, 연속된 공백 정리
                 optionText = optionText.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
-                
-                // 선택지 끝에 있는 숫자나 특수문자 제거 (예: "답안1", "답안)" 등)
-                optionText = optionText.replace(/[0-9\)\]\}\.]+$/, '').trim();
                 
                 if (optionText) {
                     options.push(optionText);
@@ -1407,6 +1390,16 @@
             }
             
             return options;
+        }
+        
+        // 문제 텍스트에서 선택지 부분 제거하는 함수
+        function getQuestionTextOnly(questionText) {
+            const firstChoiceIndex = questionText.search(/[①②③④⑤]/);
+            if (firstChoiceIndex !== -1) {
+                // 첫 번째 선택지 기호 이전까지만 반환
+                return questionText.substring(0, firstChoiceIndex).trim();
+            }
+            return questionText.trim();
         }
         
         function selectOption(optionNumber) {
