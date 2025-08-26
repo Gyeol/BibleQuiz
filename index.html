@@ -1286,6 +1286,10 @@
             const resultDiv = document.getElementById('result');
             
             if (isCorrect) {
+                // 정답인 경우: 시도 횟수 증가 및 카운터 업데이트
+                addAnswerRecord(currentProblem.id);
+                updateAttemptCounter();
+                
                 input.classList.add('correct-answer');
                 
                 // 다음 문제 버튼 활성화
@@ -1347,6 +1351,10 @@
                     submitBtn.style.display = 'none';
                 }
             }
+            
+            // 정답 확인 시 시도 횟수 증가 및 카운터 업데이트
+            addAnswerRecord(currentProblem.id);
+            updateAttemptCounter();
             
             // 다음 문제 버튼 활성화
             enableNextButton();
@@ -1432,7 +1440,11 @@
             const resultDiv = document.getElementById('result');
             
             if (isCorrect) {
-                // 정답인 경우: 모든 선택지 비활성화하고 정답 표시
+                // 정답인 경우: 시도 횟수 증가 및 카운터 업데이트
+                addAnswerRecord(currentProblem.id);
+                updateAttemptCounter();
+                
+                // 모든 선택지 비활성화하고 정답 표시
                 options.forEach((opt, index) => {
                     opt.classList.add('disabled');
                     opt.classList.remove('selected'); // selected 클래스 제거
@@ -1543,8 +1555,7 @@
         }
         
         function nextProblem() {
-            // 다음 문제로 넘어갈 때 풀이 횟수와 푼 문제 카운트 증가
-            addAnswerRecord(currentProblem.id);
+            // 다음 문제로 넘어갈 때 푼 문제 카운트만 증가
             incrementTodayCount();
             showRandomProblem();
         }
